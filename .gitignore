@@ -1,0 +1,27 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+venv/
+env/
+.env
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Trained models (We only track code, not large model files)
+models/*
+!models/.gitkeep
+
+# Data (Similarly, we don't track large datasets in Git)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# IDE specific
+.vscode/
+.idea/
+
+vncorenlp_models/

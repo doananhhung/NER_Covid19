@@ -1,0 +1,53 @@
+2025-10-12 12:21:47,796 - INFO - --- Starting NER Prediction Demo ---
+2025-10-12 12:21:47,796 - INFO - Using device: cpu
+2025-10-12 12:21:47,796 - INFO - Loading tokenizer from D:\heheboi\Justdoit\NLP_project\vietnamese_covid_ner\models/phobert-ner-covid
+2025-10-12 12:21:49,491 - INFO - Tokenizer type: <class 'transformers.models.phobert.tokenization_phobert.PhobertTokenizer'>
+2025-10-12 12:21:49,491 - INFO - Loading model from D:\heheboi\Justdoit\NLP_project\vietnamese_covid_ner\models/phobert-ner-covid
+2025-10-12 12:21:51,035 - INFO - Loading model from D:\heheboi\Justdoit\NLP_project\vietnamese_covid_ner\models/phobert-ner-covid
+2025-10-12 12:21:51,158 - INFO - Model loaded successfully from D:\heheboi\Justdoit\NLP_project\vietnamese_covid_ner\models/phobert-ner-covid
+2025-10-12 12:21:51,158 - INFO - 
+Câu 1: 'Bệnh nhân Nguyễn Văn An, 50 tuổi, nhập viện tại Bệnh viện Bạch Mai với triệu chứng sốt cao.'
+2025-10-12 12:21:51,158 - INFO - Starting prediction for sentence: 'Bệnh nhân Nguyễn Văn An, 50 tuổi, nhập viện tại Bệnh viện Bạch Mai với triệu chứng sốt cao.'
+2025-10-12 12:21:51,158 - INFO - Tokenizing sentence...
+2025-10-12 12:21:51,158 - INFO - Number of tokens: 23
+2025-10-12 12:21:51,158 - INFO - Running model inference...
+2025-10-12 12:21:52,749 - INFO - Inference complete.
+2025-10-12 12:21:52,749 - INFO - Predicted token classes: ['O', 'O', 'O', 'B-NAME', 'B-NAME', 'B-NAME', 'O', 'B-AGE', 'O', 'O', 'O', 'O', 'O', 'O', 'B-LOCATION', 'I-LOCATION', 'I-LOCATION', 'I-LOCATION', 'O', 'O', 'O', 'B-SYMPTOM_AND_DISEASE', 'I-SYMPTOM_AND_DISEASE', 'O', 'O']
+2025-10-12 12:21:52,749 - INFO - Post-processing tokens to entities...
+2025-10-12 12:27:44,192 - INFO - --- Starting NER Prediction Demo ---
+2025-10-12 12:27:44,192 - INFO - Using device: cpu
+2025-10-12 12:27:44,192 - INFO - Loading tokenizer from vinai/phobert-base
+2025-10-12 12:27:45,775 - INFO - Tokenizer type: <class 'transformers.models.phobert.tokenization_phobert.PhobertTokenizer'>
+2025-10-12 12:27:45,775 - INFO - Loading model from D:\heheboi\Justdoit\NLP_project\vietnamese_covid_ner\models/phobert-ner-covid
+2025-10-12 12:27:46,897 - INFO - Model loaded successfully from D:\heheboi\Justdoit\NLP_project\vietnamese_covid_ner\models/phobert-ner-covid
+2025-10-12 12:27:46,897 - INFO - 
+Câu 1: 'Bệnh nhân Nguyễn Văn An, 50 tuổi, nhập viện tại Bệnh viện Bạch Mai với triệu chứng sốt cao.'
+2025-10-12 12:27:46,897 - INFO - Starting prediction for sentence: 'Bệnh nhân Nguyễn Văn An, 50 tuổi, nhập viện tại Bệnh viện Bạch Mai với triệu chứng sốt cao.'
+2025-10-12 12:27:46,897 - INFO - Tokenizing sentence...
+2025-10-12 12:27:46,897 - INFO - Running model inference...
+2025-10-12 12:27:47,068 - INFO - Inference complete.
+2025-10-12 12:27:47,068 - INFO - Post-processing tokens to entities...
+2025-10-12 12:27:47,068 - INFO - Found entity: {'text': 'Nguyễn', 'tag': 'NAME'}
+2025-10-12 12:27:47,068 - INFO - Found entity: {'text': 'Văn', 'tag': 'NAME'}
+2025-10-12 12:27:47,068 - INFO - Found entity: {'text': 'An@@', 'tag': 'NAME'}
+2025-10-12 12:27:47,068 - INFO - Found entity: {'text': '50', 'tag': 'AGE'}
+2025-10-12 12:27:47,068 - INFO - Found entity: {'text': 'Bệnh viện Bạch Mai', 'tag': 'LOCATION'}
+2025-10-12 12:27:47,068 - INFO - Found entity: {'text': 'sốt cao@@', 'tag': 'SYMPTOM_AND_DISEASE'}
+2025-10-12 12:27:47,068 - INFO - Prediction finished. Found 6 entities.
+2025-10-12 12:27:47,068 - INFO - Các thực thể được nhận dạng:
+2025-10-12 12:27:47,068 - INFO - [{'text': 'Nguyễn', 'tag': 'NAME'}, {'text': 'Văn', 'tag': 'NAME'}, {'text': 'An@@', 'tag': 'NAME'}, {'text': '50', 'tag': 'AGE'}, {'text': 'Bệnh viện Bạch Mai', 'tag': 'LOCATION'}, {'text': 'sốt cao@@', 'tag': 'SYMPTOM_AND_DISEASE'}]
+2025-10-12 12:27:47,068 - INFO - 
+Câu 2: 'Bà Trần Thị B quê ở Hà Nội, làm nghề giáo viên.'
+2025-10-12 12:27:47,068 - INFO - Starting prediction for sentence: 'Bà Trần Thị B quê ở Hà Nội, làm nghề giáo viên.'
+2025-10-12 12:27:47,081 - INFO - Tokenizing sentence...
+2025-10-12 12:27:47,082 - INFO - Running model inference...
+2025-10-12 12:27:47,166 - INFO - Inference complete.
+2025-10-12 12:27:47,167 - INFO - Post-processing tokens to entities...
+2025-10-12 12:27:47,168 - INFO - Found entity: {'text': 'Trần', 'tag': 'NAME'}
+2025-10-12 12:27:47,168 - INFO - Found entity: {'text': 'B', 'tag': 'NAME'}
+2025-10-12 12:27:47,169 - INFO - Found entity: {'text': 'Hà Nội@@', 'tag': 'LOCATION'}
+2025-10-12 12:27:47,169 - INFO - Found entity: {'text': 'giáo', 'tag': 'JOB'}
+2025-10-12 12:27:47,169 - INFO - Prediction finished. Found 4 entities.
+2025-10-12 12:27:47,170 - INFO - Các thực thể được nhận dạng:
+2025-10-12 12:27:47,170 - INFO - [{'text': 'Trần', 'tag': 'NAME'}, {'text': 'B', 'tag': 'NAME'}, {'text': 'Hà Nội@@', 'tag': 'LOCATION'}, {'text': 'giáo', 'tag': 'JOB'}]
+2025-10-12 12:27:47,170 - INFO - --- NER Prediction Demo Finished ---

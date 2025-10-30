@@ -1,0 +1,19 @@
+# --- Core ML/DL Libraries ---
+torch
+transformers
+# For sequence labeling metrics (precision, recall, f1)
+seqeval
+# For progress bars
+tqdm
+
+# --- Vietnamese NLP ---
+# Word segmentation for Vietnamese (used by PhoBERT)
+py_vncorenlp
+
+# --- Data Handling & Notebooks ---
+pandas
+jupyterlab
+
+# --- Optional for Web App ---
+streamlit
+flask
