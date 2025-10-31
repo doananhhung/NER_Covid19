@@ -6,7 +6,7 @@ import os
 import streamlit as st
 
 # Thêm thư mục `src` vào Python path để có thể import các module
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+PROJECT_ROOT = os.path.abspath(os.path.jo`in(os.path.dirname(__file__), '..'))
 if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 

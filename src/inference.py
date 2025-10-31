@@ -9,37 +9,18 @@ import numpy as np
 import sys
 import os
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 
-# Thêm thư mục `src` vào sys.path để giải quyết vấn đề import khi chạy từ các script khác
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-# Import các module tự định nghĩa
 import config
-
-# Import VnCoreNLP for word segmentation
-try:
-    # Thử dùng vncorenlp trước (khuyến nghị)
-    try:
-        from vncorenlp import VnCoreNLP
-        VNCORENLP_AVAILABLE = True
-        USE_VNCORENLP = True
-    except ImportError:
-        # Fallback sang py_vncorenlp
-        from py_vncorenlp import VnCoreNLP
-        VNCORENLP_AVAILABLE = True
-        USE_VNCORENLP = False
-except ImportError:
-    print("Warning: VnCoreNLP not installed. Word segmentation will be disabled.")
-    print("Install it with: pip install vncorenlp")
-    VNCORENLP_AVAILABLE = False
-    USE_VNCORENLP = False
+from text_processor import get_text_processor
 
 class NERPredictor:
     """
     Lớp đóng gói mô hình NER để thực hiện dự đoán trên văn bản mới.
     """
-    def __init__(self, model_path, use_word_segmentation: bool = True):
+    def __init__(self, model_path: str, use_word_segmentation: bool = True):
         """
         Hàm khởi tạo.
 
@@ -53,66 +34,23 @@ class NERPredictor:
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             self.model = AutoModelForTokenClassification.from_pretrained(model_path)
             self.model.to(self.device)
-            self.model.eval() # Chuyển model sang chế độ đánh giá
+            self.model.eval()
             
-            # Lấy thông tin mapping từ id sang nhãn từ config của model
             self.ids_to_tags = self.model.config.id2label
             print(f"Model loaded successfully from {model_path} on device {self.device}")
         except OSError:
             print(f"Lỗi: Không tìm thấy model tại '{model_path}'.")
             self.model = None
         
-        # Khởi tạo VnCoreNLP cho word segmentation
-        self.use_word_segmentation = use_word_segmentation and VNCORENLP_AVAILABLE
-        self.word_segmenter = None
+        self.use_word_segmentation = use_word_segmentation
+        self.text_processor = get_text_processor() if use_word_segmentation else None
         
-        if self.use_word_segmentation:
-            try:
-                print("Initializing VnCoreNLP for word segmentation...")
-                
-                # Tìm đường dẫn VnCoreNLP models
-                current_dir = os.path.dirname(os.path.abspath(__file__))
-                project_root = os.path.dirname(current_dir)
-                
-                possible_paths = [
-                    os.path.join(project_root, 'vncorenlp_models'),
-                    './vncorenlp_models',
-                    os.path.join(os.getcwd(), 'vncorenlp_models'),
-                ]
-                
-                vncorenlp_path = None
-                for path in possible_paths:
-                    if os.path.exists(path):
-                        vncorenlp_path = path
-                        break
-                
-                if vncorenlp_path is None:
-                    raise FileNotFoundError(
-                        "VnCoreNLP models not found. Please run:\n"
-                        "  git clone https://github.com/vncorenlp/VnCoreNLP.git vncorenlp_models"
-                    )
-                
-                # Khởi tạo với thư viện phù hợp
-                if USE_VNCORENLP:
-                    # vncorenlp cần đường dẫn đến JAR file
-                    jar_file = os.path.join(vncorenlp_path, 'VnCoreNLP-1.2.jar')
-                    if not os.path.isfile(jar_file):
-                        raise FileNotFoundError(f"JAR file not found: {jar_file}")
-                    print(f"   Using vncorenlp library with JAR: {jar_file}")
-                    self.word_segmenter = VnCoreNLP(jar_file, annotators='wseg', max_heap_size='-Xmx2g')
-                else:
-                    # py_vncorenlp dùng thư mục
-                    print(f"   Using py_vncorenlp library with dir: {vncorenlp_path}")
-                    self.word_segmenter = VnCoreNLP(save_dir=vncorenlp_path, annotators=['wseg'])
-                
-                print(" VnCoreNLP loaded successfully")
-            except Exception as e:
-                print(f"  Warning: Could not initialize VnCoreNLP: {e}")
-                print("   Word segmentation will be disabled.")
+        if use_word_segmentation:
+            if self.text_processor and self.text_processor.is_available():
+                print("VnCoreNLP word segmentation đã sẵn sàng")
+            else:
+                print("Cảnh báo: VnCoreNLP không khả dụng. Word segmentation sẽ bị vô hiệu hóa.")
                 self.use_word_segmentation = False
-        else:
-            if not VNCORENLP_AVAILABLE:
-                print(" VnCoreNLP not available. Install with: pip install vncorenlp")
     
     def segment_text(self, text: str) -> str:
         """
@@ -124,35 +62,11 @@ class NERPredictor:
         Returns:
             str: Văn bản đã được tách từ (các từ ghép nối bằng dấu _)
         """
-        if not self.use_word_segmentation or not self.word_segmenter:
+        if not self.use_word_segmentation or not self.text_processor:
             return text
         
-        try:
-            if USE_VNCORENLP:
-                # vncorenlp library: sử dụng tokenize
-                segmented = self.word_segmenter.tokenize(text)
-                # segmented là list of list: [[word1, word2, ...], [sentence2...], ...]
-                # QUAN TRỌNG: Phải ghép TẤT CẢ các câu, không chỉ câu đầu!
-                if segmented and isinstance(segmented, list) and len(segmented) > 0:
-                    # Ghép tất cả các câu
-                    result = ' '.join([' '.join(sent) for sent in segmented])
-                    return result
-            else:
-                # py_vncorenlp library: sử dụng word_segment
-                segmented = self.word_segmenter.word_segment(text)
-                # segmented là list of list: [[word1, word2, ...], [word1, word2, ...]]
-                if isinstance(segmented, list) and len(segmented) > 0:
-                    # Nếu là list of lists (multiple sentences)
-                    if isinstance(segmented[0], list):
-                        result = ' '.join([' '.join(sent) for sent in segmented])
-                    else:
-                        # Nếu là list of words (single sentence)
-                        result = ' '.join(segmented)
-                    return result
-            return text
-        except Exception as e:
-            print(f"⚠️  Word segmentation failed: {e}")
-            return text
+        segmented = self.text_processor.segment_text(text)
+        return segmented if segmented is not None else text
 
     def predict(self, sentence: str, max_length: int = 220, show_debug: bool = False):
         """
@@ -463,7 +377,7 @@ class NERPredictor:
             if not found:
                 # Vẫn không tìm thấy - thêm vào nhưng không có vị trí
                 if show_debug:
-                    print(f"  ⚠️  Could not find position for entity: '{entity_text_original}' ({entity_tag})")
+                    print(f"    Could not find position for entity: '{entity_text_original}' ({entity_tag})")
                 entities_with_positions.append({
                     "text": entity_text_original,  # Sử dụng text gốc (không có _)
                     "tag": entity_tag,

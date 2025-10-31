@@ -78,3 +78,11 @@ IDS_TO_TAGS = {i: tag for i, tag in enumerate(UNIQUE_TAGS)}
 # Chúng ta sẽ gán ID -100 cho các token này để Pytorch bỏ qua chúng khi tính loss.
 SUBWORD_TAG_ID = -100
 
+
+# --- 5. Cấu hình VnCoreNLP (Word Segmentation) ---
+# Đường dẫn đến thư mục chứa models của VnCoreNLP
+VNCORENLP_MODELS_DIR = os.path.join(BASE_PROJECT_DIR, 'vncorenlp_models')
+
+# Annotators cần thiết cho VnCoreNLP (chỉ cần word segmentation)
+VNCORENLP_ANNOTATORS = ['wseg']
+
