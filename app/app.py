@@ -6,12 +6,21 @@ import os
 import streamlit as st
 
 # Thêm thư mục `src` vào Python path để có thể import các module
-PROJECT_ROOT = os.path.abspath(os.path.jo`in(os.path.dirname(__file__), '..'))
+# Sử dụng __file__ của chính file này để xác định đúng PROJECT_ROOT
+CURRENT_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(CURRENT_FILE_DIR)  # Lùi về thư mục gốc
 if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
+    sys.path.insert(0, PROJECT_ROOT)  # insert(0) để ưu tiên tìm trong project
+
+# Đổi working directory về PROJECT_ROOT để tránh path confusion
+os.chdir(PROJECT_ROOT)
 
 from src.inference import NERPredictor
 from src import config as ner_config
+
+# Import utils từ cùng thư mục app
+import sys
+sys.path.insert(0, CURRENT_FILE_DIR)
 from utils import render_entities
 
 @st.cache_resource
@@ -22,6 +31,14 @@ def load_ner_model():
         NERPredictor: Một instance của lớp NERPredictor, hoặc None nếu có lỗi.
     """
     try:
+        print("=" * 80)
+        print("DEBUG INFO:")
+        print(f"Current working directory: {os.getcwd()}")
+        print(f"PROJECT_ROOT: {PROJECT_ROOT}")
+        print(f"Model path: {ner_config.MODEL_OUTPUT_DIR}")
+        print(f"VnCoreNLP path: {ner_config.VNCORENLP_MODELS_DIR}")
+        print("=" * 80)
+        
         print("Đang tải mô hình NER...")
         # BẬT word segmentation để cải thiện độ chính xác
         predictor = NERPredictor(

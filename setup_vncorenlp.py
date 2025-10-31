@@ -8,9 +8,12 @@ import urllib.request
 import zipfile
 import shutil
 
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+# Thêm thư mục gốc vào Python path
+PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
-import config
+from src import config
 
 
 def download_file(url: str, dest_path: str) -> None:

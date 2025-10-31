@@ -8,3 +8,7 @@ font="sans serif"
 [server]
 maxUploadSize = 200
 enableXsrfProtection = false
+# Tắt file watcher để tránh lỗi path confusion
+fileWatcherType = "none"
+# Hoặc dùng "poll" nếu vẫn muốn auto-reload
+# fileWatcherType = "poll"

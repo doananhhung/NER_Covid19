@@ -26,4 +26,4 @@ data/processed/*
 
 vncorenlp_models/
 examples/
-test_text_person_processor.py
+test_text_processor.py
