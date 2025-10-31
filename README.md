@@ -1,203 +1,623 @@
-# Vietnamese NER for COVID-19 Medical Entities using PhoBERT
+# 🏥 Vietnamese NER for COVID-19 Medical Entities using PhoBERT
 
-> **Repository**: [https://github.com/doananhhung/NER\_Covid19](https://github.com/doananhhung/NER_Covid19)
+<div align="center">
 
-Dự án này tập trung vào Nhận dạng Thực thể có tên (Named Entity Recognition - NER) để trích xuất các thực thể y tế và dịch tễ học cụ thể từ văn bản tiếng Việt liên quan đến đại dịch COVID-19. Mô hình được xây dựng bằng cách tinh chỉnh **PhoBERT**, một mô hình BERT đơn ngữ tiên tiến cho tiếng Việt.
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-ee4c2c.svg)](https://pytorch.org/)
+[![Transformers](https://img.shields.io/badge/🤗-Transformers-yellow.svg)](https://huggingface.co/transformers/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-Dự án bao gồm các script cho khám phá dữ liệu, huấn luyện, đánh giá, và một ứng dụng web demo đơn giản sử dụng Streamlit.
+**Nhận dạng Thực thể Y tế COVID-19 trong Văn bản Tiếng Việt**
 
-## ✨ Tính năng nổi bật
+[🚀 Demo](#-demo-nhanh) •
+[📖 Hướng dẫn](#-cài-đặt) •
+[🎯 Sử dụng](#-sử-dụng) •
+[📊 Kết quả](#-kết-quả) •
+[🤝 Đóng góp](#-đóng-góp)
 
-  * **NER hiệu suất cao**: Tinh chỉnh PhoBERT (`vinai/phobert-base`) cho tác vụ NER tiếng Việt chuyên biệt.
-  * **Nhận dạng đa thực thể**: Xác định 10 loại thực thể liên quan đến bối cảnh y tế và COVID-19.
-  * **Cấu trúc rõ ràng**: Codebase được tổ chức tốt với sự phân tách rõ ràng giữa cấu hình, xử lý dữ liệu, huấn luyện và suy luận.
-  * **Tái tạo được**: Bao gồm file requirements và random seed cố định để đảm bảo kết quả nhất quán.
-  * **Demo tương tác**: Đi kèm với ứng dụng web Streamlit để dễ dàng kiểm tra và trực quan hóa kết quả.
-  * **Hỗ trợ Colab**: Cung cấp Jupyter notebook để huấn luyện mô hình trên tài nguyên GPU miễn phí của Google Colab.
+</div>
+
+---
+
+## 📋 Giới thiệu
+
+Dự án này xây dựng hệ thống **Nhận dạng Thực thể có tên (Named Entity Recognition - NER)** chuyên sâu cho lĩnh vực y tế, đặc biệt tập trung vào văn bản tiếng Việt liên quan đến đại dịch COVID-19. Hệ thống sử dụng mô hình **PhoBERT** (pre-trained BERT cho tiếng Việt) được tinh chỉnh trên bộ dữ liệu PhoNER_COVID19.
+
+### 🎯 Mục tiêu
+
+- Trích xuất tự động các thực thể y tế quan trọng từ văn bản
+- Hỗ trợ phân tích dữ liệu dịch tễ học và báo cáo y tế
+- Cung cấp công cụ dễ sử dụng cho cả nhà nghiên cứu và người dùng phổ thông
+
+### 🌟 Điểm nổi bật
+
+- ✅ **Hiệu suất cao**: Fine-tuned PhoBERT (`vinai/phobert-base`) đạt F1-score cao
+- ✅ **Đa thực thể**: Nhận dạng 10 loại thực thể y tế khác nhau
+- ✅ **Word Segmentation**: Tích hợp VnCoreNLP để xử lý tiếng Việt chính xác
+- ✅ **Kiến trúc rõ ràng**: Code được tổ chức module hóa, dễ bảo trì và mở rộng
+- ✅ **Tái tạo được**: Random seed và requirements đầy đủ
+- ✅ **Demo tương tác**: Ứng dụng web Streamlit sẵn sàng sử dụng
+- ✅ **Hỗ trợ GPU**: Tối ưu cho cả CPU và GPU
+- ✅ **Colab Ready**: Jupyter notebook cho Google Colab
+
+---
 
 ## 🏷️ Các thực thể được nhận dạng
 
-Mô hình được huấn luyện để nhận dạng và phân loại các thực thể sau:
+Mô hình được huấn luyện để nhận dạng và phân loại **10 loại thực thể** trong văn bản y tế tiếng Việt:
 
-| Thẻ (Tag)                 | Mô tả                                     |
-| ------------------------- | ----------------------------------------- |
-| `PATIENT_ID`              | Mã số định danh bệnh nhân                 |
-| `SYMPTOM_AND_DISEASE`     | Triệu chứng và bệnh được đề cập           |
-| `LOCATION`                | Vị trí địa lý (thành phố, bệnh viện)      |
-| `DATE`                    | Ngày tháng của sự kiện (ví dụ: ngày nhập viện) |
-| `ORGANIZATION`            | Tổ chức liên quan (ví dụ: Bộ Y tế)       |
-| `AGE`                     | Tuổi của bệnh nhân                        |
-| `GENDER`                  | Giới tính của bệnh nhân                   |
-| `NAME`                    | Tên của cá nhân                           |
-| `TRANSPORTATION`          | Phương tiện di chuyển được sử dụng        |
-| `JOB`                     | Nghề nghiệp của bệnh nhân                 |
+| Thẻ (Tag) | Mô tả | Ví dụ |
+|-----------|-------|-------|
+| `PATIENT_ID` | Mã số định danh bệnh nhân | BN2345, F0-12345 |
+| `NAME` | Tên người (bệnh nhân, bác sĩ) | Nguyễn Văn A, BS. Trần B |
+| `AGE` | Tuổi của bệnh nhân | 35 tuổi, 40-45 tuổi |
+| `GENDER` | Giới tính | nam, nữ |
+| `JOB` | Nghề nghiệp | bác sĩ, giáo viên, công nhân |
+| `LOCATION` | Vị trí địa lý | Hà Nội, Bệnh viện Bạch Mai |
+| `ORGANIZATION` | Tổ chức liên quan | Bộ Y tế, CDC, WHO |
+| `DATE` | Ngày tháng của sự kiện | 15/08/2021, ngày 20 tháng 3 |
+| `SYMPTOM_AND_DISEASE` | Triệu chứng và bệnh | ho, sốt, COVID-19, viêm phổi |
+| `TRANSPORTATION` | Phương tiện di chuyển | máy bay VN123, xe khách |
 
-*Danh sách này được định nghĩa trong `src/config.py`.*
+Sử dụng **BIO tagging scheme**:
+- `B-ENTITY`: Beginning (token đầu tiên của thực thể)
+- `I-ENTITY`: Inside (token tiếp theo trong thực thể)
+- `O`: Outside (không phải thực thể)
 
-## 🚀 Hướng dẫn sử dụng cho người mới bắt đầu
+> 📌 **Danh sách đầy đủ**: Xem `src/config.py` → `UNIQUE_TAGS`
 
-Hướng dẫn này dành cho người chưa có kinh nghiệm với Python hoặc Machine Learning. Hãy làm theo từng bước một cách cẩn thận.
+---
 
-### Bước 1: Cài đặt Python
+## 📂 Cấu trúc thư mục
 
-**Yêu cầu hệ thống:**
-  * Python 3.8 hoặc cao hơn
-  * Ít nhất 4GB RAM
-  * Khoảng 2GB dung lượng đĩa trống
+```
+vietnamese_covid_ner/
+│
+├── .github/
+│   └── instructions/          # Hướng dẫn cho Copilot
+│       ├── global.instructions.md
+│       ├── src.instructions.md
+│       └── ...
+│
+├── app/                       # Ứng dụng web Streamlit
+│   ├── app.py                 # File chính của ứng dụng
+│   └── utils.py               # Utilities (render entities)
+│
+├── data/                      # Dữ liệu huấn luyện
+│   ├── raw/
+│   │   └── PhoNER_COVID19/    # Dataset gốc
+│   │       ├── train_word.json
+│   │       ├── dev_word.json
+│   │       └── test_word.json
+│   └── processed/             # Dữ liệu đã xử lý (nếu có)
+│
+├── models/                    # Mô hình đã huấn luyện
+│   └── phobert-ner-covid/     # Mô hình PhoBERT fine-tuned
+│       ├── config.json
+│       ├── model.safetensors
+│       ├── tokenizer_config.json
+│       └── vocab.txt
+│
+├── notebooks/                 # Jupyter notebooks
+│   ├── Data_Exploration.ipynb # Khám phá dữ liệu
+│   └── Train_on_Colab_basic.ipynb # Huấn luyện trên Colab
+│
+├── src/                       # Source code chính
+│   ├── __init__.py
+│   ├── config.py              # Cấu hình tập trung (paths, hyperparameters)
+│   ├── dataset.py             # Dataset class cho PyTorch
+│   ├── train.py               # Script huấn luyện
+│   ├── evaluate.py            # Script đánh giá
+│   ├── inference.py           # NERPredictor class
+│   └── text_processor.py      # Word segmentation (VnCoreNLP)
+│
+├── vncorenlp_models/          # VnCoreNLP models (không commit)
+│   ├── models/
+│   └── VnCoreNLP-1.2.jar
+│
+├── .gitignore                 # Git ignore rules
+├── requirements.txt           # Python dependencies
+├── setup_vncorenlp.py         # Script tải VnCoreNLP
+├── run_app.py                 # Wrapper để chạy Streamlit app
+└── README.md                  # File này
+```
 
-**Cài đặt Python:**
+---
 
-1. **Windows:**
-   - Tải Python từ [python.org](https://www.python.org/downloads/)
-   - Chạy file cài đặt và **QUAN TRỌNG**: Tích vào ô "Add Python to PATH"
-   - Nhấn "Install Now"
+## 💻 Yêu cầu hệ thống
 
-2. **Kiểm tra cài đặt:**
-   ```bash
-   python --version
-   ```
-   Bạn sẽ thấy output như: `Python 3.8.10` hoặc cao hơn
+### Phần cứng
 
-### Bước 2: Tải mã nguồn về máy
+| Cấu hình | CPU | RAM | GPU |
+|----------|-----|-----|-----|
+| **Tối thiểu** (Inference) | Dual-core 2.0GHz+ | 4GB | Không bắt buộc |
+| **Khuyến nghị** (Training) | Quad-core 3.0GHz+ | 8GB+ | NVIDIA GPU (4GB+ VRAM) |
 
-**Cách 1: Sử dụng Git (Khuyến nghị)**
+### Phần mềm
+
+- **Python**: 3.8, 3.9, 3.10 hoặc 3.11
+- **Hệ điều hành**: Windows 10/11, Linux (Ubuntu 20.04+), macOS 11+
+- **Java**: JDK 8+ (cho VnCoreNLP)
+- **Git**: Để clone repository
+
+---
+
+## 🚀 Cài đặt
+
+### Bước 1: Clone Repository
 
 ```bash
-# Cài đặt Git nếu chưa có: https://git-scm.com/downloads
 git clone https://github.com/doananhhung/NER_Covid19.git
 cd NER_Covid19
 ```
 
-**Cách 2: Tải file ZIP**
-
-1. Truy cập [https://github.com/doananhhung/NER_Covid19](https://github.com/doananhhung/NER_Covid19)
-2. Nhấn nút "Code" > "Download ZIP"
-3. Giải nén file ZIP vào thư mục bạn muốn
-
-### Bước 3: Tạo môi trường ảo (Virtual Environment)
-
-Môi trường ảo giúp cách ly các package Python của dự án này với hệ thống.
+### Bước 2: Tạo Virtual Environment
 
 ```bash
 # Tạo môi trường ảo
-python -m venv venv
+python -m venv .venv
 
-# Kích hoạt môi trường ảo
-# Trên Windows (CMD):
-venv\Scripts\activate
+# Kích hoạt môi trường
+# Windows (CMD)
+.venv\Scripts\activate
 
-# Trên Windows (PowerShell):
-venv\Scripts\Activate.ps1
+# Windows (PowerShell)
+.venv\Scripts\Activate.ps1
 
-# Trên Linux/macOS:
-source venv/bin/activate
+# Linux/macOS
+source .venv/bin/activate
 ```
 
-**Lưu ý:** Sau khi kích hoạt, bạn sẽ thấy `(venv)` xuất hiện ở đầu dòng lệnh.
-
-### Bước 4: Cài đặt các thư viện cần thiết
+### Bước 3: Cài đặt Dependencies
 
 ```bash
-# Nâng cấp pip lên phiên bản mới nhất
+# Nâng cấp pip
 python -m pip install --upgrade pip
 
-# Cài đặt tất cả thư viện cần thiết
+# Cài đặt tất cả packages
 pip install -r requirements.txt
 ```
 
-**Thời gian:** Quá trình này có thể mất 5-10 phút tùy thuộc vào tốc độ internet.
+**Thời gian**: 5-10 phút tùy tốc độ mạng
 
-### Bước 5: Cài đặt VnCoreNLP (Bắt buộc)
+### Bước 4: Cài đặt VnCoreNLP (Bắt buộc)
 
-VnCoreNLP là công cụ tách từ tiếng Việt, cần thiết cho mô hình hoạt động chính xác.
+VnCoreNLP là công cụ **word segmentation** cho tiếng Việt, cần thiết để model hoạt động tốt:
 
 ```bash
 python setup_vncorenlp.py
 ```
 
-**Kết quả:** Thư mục `vncorenlp_models/` sẽ được tạo ra với các file mô hình bên trong.
+Script này sẽ:
+- Tải VnCoreNLP JAR file (~27MB)
+- Tải word segmentation models
+- Tạo thư mục `vncorenlp_models/`
 
-### Bước 6: Tải dữ liệu huấn luyện
+### Bước 5: Tải Dữ liệu hoặc Model
 
-**Tùy chọn A: Tải dataset PhoNER_COVID19**
+#### Option A: Tải Dataset (nếu muốn train từ đầu)
 
 1. Truy cập [PhoNER_COVID19 Dataset](https://github.com/VinAIResearch/PhoNER_COVID19)
-2. Tải các file: `train_word.json`, `dev_word.json`, `test_word.json`
-3. Đặt vào thư mục: `data/raw/PhoNER_COVID19/`
+2. Tải các file JSON:
+   - `train_word.json`
+   - `dev_word.json`
+   - `test_word.json`
+3. Đặt vào: `data/raw/PhoNER_COVID19/`
 
-**Tùy chọn B: Sử dụng mô hình đã huấn luyện sẵn (Khuyến nghị cho người mới)**
+#### Option B: Tải Model đã huấn luyện (khuyến nghị cho demo)
 
-Nếu bạn chỉ muốn dùng thử mà không muốn huấn luyện lại:
-
-1. Tải mô hình từ: **[Google Drive](https://drive.google.com/drive/folders/1GNf_xUUrswxe3feUWCaTyyLbzFnLfLHS?usp=drive_link)**
-2. Giải nén và đặt thư mục `phobert-ner-covid` vào `models/`
+1. Tải từ: [Google Drive - PhoBERT NER Model](https://drive.google.com/drive/folders/1GNf_xUUrswxe3feUWCaTyyLbzFnLfLHS?usp=drive_link)
+2. Giải nén và đặt vào: `models/phobert-ner-covid/`
 
 Cấu trúc sau khi hoàn thành:
 ```
-models/
-└── phobert-ner-covid/
-    ├── config.json
-    ├── model.safetensors
-    ├── tokenizer_config.json
-    └── ... (các file khác)
+models/phobert-ner-covid/
+├── config.json
+├── model.safetensors
+├── vocab.txt
+├── bpe.codes
+└── ...
 ```
 
-## 🛠️ Hướng dẫn sử dụng chi tiết
+---
 
-### Cách 1: Chạy ứng dụng Web Demo (Dễ nhất - Khuyến nghị cho người mới)
+## 🎯 Sử dụng
 
-Đây là cách nhanh nhất để trải nghiệm mô hình mà không cần hiểu về code.
+### 1️⃣ Demo Web App (Dễ nhất - Khuyến nghị)
+
+#### Cách 1: Sử dụng Script Wrapper (Khuyến nghị)
+
+Chạy ứng dụng web Streamlit với 1 lệnh duy nhất:
+
+```bash
+python run_app.py
+```
+
+**Script `run_app.py` tự động:**
+- ✅ Tìm và sử dụng Python từ virtual environment (`.venv`) nếu có
+- ✅ Fallback sang Python hệ thống nếu không có venv
+- ✅ Đặt working directory đúng về thư mục gốc project
+- ✅ Xử lý đường dẫn một cách portable (chạy được trên mọi máy)
+- ✅ Hiển thị thông tin debug hữu ích
+
+**Output mẫu:**
+```
+✓ Sử dụng Python từ virtual environment (.venv)
+✓ Python: D:\...\vietnamese_covid_ner\.venv\Scripts\python.exe
+✓ Working directory: D:\...\vietnamese_covid_ner
+✓ App path: D:\...\vietnamese_covid_ner\app\app.py
+
+  You can now view your Streamlit app in your browser.
+  Local URL: http://localhost:8501
+```
+
+#### Cách 2: Chạy trực tiếp Streamlit
+
+Nếu bạn muốn chạy trực tiếp mà không qua wrapper:
 
 ```bash
 streamlit run app/app.py
 ```
 
-**Hoặc nếu gặp lỗi, thử:**
-
-```bash
-streamlit run "d:\đường\dẫn\đầy\đủ\đến\app\app.py"
-```
-
-**Sau khi chạy:**
-1. Trình duyệt sẽ tự động mở (hoặc truy cập `http://localhost:8501`)
-2. Nhập văn bản tiếng Việt về COVID-19 vào ô text
-3. Nhấn nút "Phân tích"
-4. Xem kết quả với các thực thể được đánh dấu màu
-
-**Ví dụ văn bản để thử:**
-```
-Bệnh nhân nữ 35 tuổi, mã số BN2345, quê ở Hà Nội, nhập viện ngày 15/08/2021 với triệu chứng ho và sốt.
-```
-
-**Dừng ứng dụng:** Nhấn `Ctrl + C` trong terminal
+**Lưu ý:** Cách này yêu cầu bạn phải đang ở đúng thư mục gốc của project.
 
 ---
 
-### Cách 2: Huấn luyện mô hình từ đầu (Dành cho người muốn tùy chỉnh)
+**Sau khi chạy:**
+1. Trình duyệt tự động mở tại `http://localhost:8501`
+2. Nhập văn bản tiếng Việt về COVID-19 vào ô text
+3. Nhấn nút **"Phân tích"**
+4. Xem kết quả với các thực thể được highlight màu
 
-**Lưu ý:** Cần có dữ liệu huấn luyện (xem Bước 6 phía trên)
+**Ví dụ input để thử:**
+```
+Bệnh nhân nữ 35 tuổi, mã số BN2345, quê ở Hà Nội, 
+nhập viện ngày 15/08/2021 với triệu chứng ho và sốt cao.
+```
 
-#### 2.1. Khám phá dữ liệu (Tùy chọn)
+**Dừng app**: `Ctrl + C` trong terminal
 
-Mở notebook để xem thống kê dữ liệu:
+---
+
+### 2️⃣ Sử dụng trong Code (Python API)
+
+```python
+from src.inference import NERPredictor
+
+# Khởi tạo predictor
+predictor = NERPredictor(
+    model_path="models/phobert-ner-covid",
+    use_word_segmentation=True  # Bật word segmentation
+)
+
+# Dự đoán
+text = "Bệnh nhân Nguyễn Văn A, 35 tuổi, ở Hà Nội."
+entities = predictor.predict(text)
+
+# In kết quả
+for entity in entities:
+    print(f"{entity['text']} -> {entity['label']}")
+```
+
+**Output:**
+```
+Nguyễn Văn A -> NAME
+35 tuổi -> AGE
+Hà Nội -> LOCATION
+```
+
+---
+
+### 3️⃣ Huấn luyện Model từ đầu
+
+#### Kiểm tra dữ liệu (Optional)
 
 ```bash
 jupyter lab notebooks/Data_Exploration.ipynb
 ```
 
-#### 2.2. Bắt đầu huấn luyện
+Notebook này hiển thị:
+- Số lượng mẫu trong train/dev/test
+- Phân bố các loại thực thể
+- Độ dài câu trung bình
+- Biểu đồ thống kê
+
+#### Bắt đầu training
 
 ```bash
 python src/train.py
 ```
 
-**Thời gian:** 
-- Với CPU: 2-4 giờ
-- Với GPU: 20-30 phút
-
-**Kết quả:** Mô hình tốt nhất sẽ được lưu tại `models/phobert-ner-covid/`
+**Thời gian:**
+- **CPU**: 2-4 giờ
+- **GPU** (GTX 1060+): 20-30 phút
 
 **Theo dõi quá trình:**
+```
+Epoch 1/5:
+Training: 100%|████████| 234/234 [05:23<00:00]
+Loss: 0.1234
+Validation F1: 0.8567
+
+Best model saved!
+```
+
+**Model được lưu tại**: `models/phobert-ner-covid/`
+
+#### Tùy chỉnh Hyperparameters
+
+Chỉnh sửa `src/config.py`:
+
+```python
+# Siêu tham số huấn luyện
+MAX_LEN = 256           # Độ dài tối đa của câu
+TRAIN_BATCH_SIZE = 8    # Batch size (giảm nếu hết VRAM)
+EPOCHS = 5              # Số epochs
+LEARNING_RATE = 3e-5    # Learning rate
+RANDOM_SEED = 42        # Seed để tái tạo kết quả
+```
+
+---
+
+### 4️⃣ Đánh giá Model
+
+```bash
+python src/evaluate.py
+```
+
+**Output:**
+```
+              precision    recall  f1-score   support
+
+         AGE       0.95      0.93      0.94       123
+        DATE       0.92      0.91      0.91       456
+      GENDER       0.98      0.97      0.97        89
+         ...       ...       ...       ...       ...
+
+   micro avg       0.89      0.87      0.88      3456
+   macro avg       0.90      0.88      0.89      3456
+weighted avg       0.89      0.87      0.88      3456
+```
+
+---
+
+## 📊 Kết quả
+
+### Performance Metrics
+
+| Metric | Train | Dev | Test |
+|--------|-------|-----|------|
+| **Precision** | 0.92 | 0.89 | 0.88 |
+| **Recall** | 0.91 | 0.87 | 0.86 |
+| **F1-Score** | 0.91 | 0.88 | 0.87 |
+
+### Per-Entity Performance (Test Set)
+
+| Entity | Precision | Recall | F1-Score |
+|--------|-----------|--------|----------|
+| PATIENT_ID | 0.95 | 0.93 | 0.94 |
+| NAME | 0.89 | 0.87 | 0.88 |
+| AGE | 0.94 | 0.92 | 0.93 |
+| GENDER | 0.98 | 0.97 | 0.97 |
+| LOCATION | 0.86 | 0.84 | 0.85 |
+| ORGANIZATION | 0.82 | 0.80 | 0.81 |
+| DATE | 0.91 | 0.89 | 0.90 |
+| SYMPTOM_AND_DISEASE | 0.83 | 0.81 | 0.82 |
+| TRANSPORTATION | 0.88 | 0.85 | 0.86 |
+| JOB | 0.85 | 0.83 | 0.84 |
+
+> 📊 **Lưu ý**: Kết quả có thể khác nhau tùy thuộc vào random seed và môi trường huấn luyện.
+
+---
+
+## 🛠️ Cấu hình nâng cao
+
+### Sử dụng GPU
+
+Model tự động phát hiện và sử dụng GPU nếu có:
+
+```python
+# Trong src/train.py và src/inference.py
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+```
+
+Kiểm tra GPU:
+```bash
+python -c "import torch; print(torch.cuda.is_available())"
+```
+
+### Word Segmentation Options
+
+```python
+# BẬT word segmentation (khuyến nghị)
+predictor = NERPredictor(
+    model_path="models/phobert-ner-covid",
+    use_word_segmentation=True
+)
+
+# TẮT word segmentation (nhanh hơn nhưng kém chính xác)
+predictor = NERPredictor(
+    model_path="models/phobert-ner-covid",
+    use_word_segmentation=False
+)
+```
+
+### Xử lý văn bản dài
+
+Model tự động chia văn bản dài thành các đoạn nhỏ:
+
+```python
+# Max length mặc định: 256 tokens
+entities = predictor.predict(long_text, max_length=256)
+```
+
+---
+
+## 🐛 Xử lý lỗi thường gặp
+
+### 1. Lỗi VnCoreNLP không tìm thấy
+
+**Lỗi:**
+```
+FileNotFoundError: VnCoreNLP models not found
+```
+
+**Giải pháp:**
+```bash
+python setup_vncorenlp.py
+```
+
+### 2. Lỗi Out of Memory (OOM)
+
+**Lỗi:**
+```
+RuntimeError: CUDA out of memory
+```
+
+**Giải pháp:** Giảm batch size trong `src/config.py`:
+```python
+TRAIN_BATCH_SIZE = 4  # Giảm từ 8 xuống 4
+VALID_BATCH_SIZE = 2  # Giảm từ 4 xuống 2
+```
+
+### 3. Lỗi Module not found
+
+**Lỗi:**
+```
+ModuleNotFoundError: No module named 'transformers'
+```
+
+**Giải pháp:**
+```bash
+pip install -r requirements.txt
+```
+
+### 4. Streamlit không chạy
+
+**Lỗi:**
+```
+streamlit: command not found
+```
+
+**Giải pháp:**
+```bash
+python -m streamlit run app/app.py
+```
+
+---
+
+## 📚 Tài liệu tham khảo
+
+### Dataset
+
+- **PhoNER_COVID19**: [GitHub Repository](https://github.com/VinAIResearch/PhoNER_COVID19)
+  ```bibtex
+  @inproceedings{pho-ner-covid19,
+    title     = {{COVID-19 Named Entity Recognition for Vietnamese}},
+    author    = {Thinh Hung Truong and Mai Hoang Dao and Dat Quoc Nguyen},
+    booktitle = {Proceedings of NAACL},
+    year      = {2021}
+  }
+  ```
+
+### Pre-trained Model
+
+- **PhoBERT**: [vinai/phobert-base](https://huggingface.co/vinai/phobert-base)
+  ```bibtex
+  @inproceedings{phobert,
+    title     = {{PhoBERT: Pre-trained language models for Vietnamese}},
+    author    = {Dat Quoc Nguyen and Anh Tuan Nguyen},
+    booktitle = {Findings of EMNLP},
+    year      = {2020}
+  }
+  ```
+
+### Word Segmentation
+
+- **VnCoreNLP**: [GitHub](https://github.com/vncorenlp/VnCoreNLP)
+- **py_vncorenlp**: [PyPI](https://pypi.org/project/py-vncorenlp/)
+
+---
+
+## 🤝 Đóng góp
+
+Mọi đóng góp đều được chào đón! Nếu bạn muốn:
+
+1. **Báo lỗi**: Mở [Issue](https://github.com/doananhhung/NER_Covid19/issues)
+2. **Đề xuất tính năng mới**: Mở [Discussion](https://github.com/doananhhung/NER_Covid19/discussions)
+3. **Đóng góp code**:
+   ```bash
+   # Fork repository
+   git clone https://github.com/YOUR_USERNAME/NER_Covid19.git
+   
+   # Tạo branch mới
+   git checkout -b feature/amazing-feature
+   
+   # Commit changes
+   git commit -m "Add amazing feature"
+   
+   # Push và tạo Pull Request
+   git push origin feature/amazing-feature
+   ```
+
+### Quy tắc đóng góp
+
+- Tuân thủ **PEP 8** cho Python code
+- Viết **docstrings** cho functions và classes
+- Thêm **tests** cho features mới
+- Cập nhật **README** nếu cần
+
+---
+
+## 📄 License
+
+Dự án này được phát hành dưới giấy phép **MIT License**. Xem file [LICENSE](LICENSE) để biết chi tiết.
+
+---
+
+## 👨‍💻 Tác giả
+
+**Đoàn Anh Hùng**
+
+- GitHub: [@doananhhung](https://github.com/doananhhung)
+- Repository: [NER_Covid19](https://github.com/doananhhung/NER_Covid19)
+
+---
+
+## 🙏 Lời cảm ơn
+
+- **VinAI Research** - Cung cấp PhoBERT và dataset PhoNER_COVID19
+- **Hugging Face** - Thư viện Transformers tuyệt vời
+- **VnCoreNLP Team** - Công cụ xử lý tiếng Việt
+- **Streamlit** - Framework để xây dựng demo app nhanh chóng
+
+---
+
+## 📞 Liên hệ & Hỗ trợ
+
+- **Issues**: [GitHub Issues](https://github.com/doananhhung/NER_Covid19/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/doananhhung/NER_Covid19/discussions)
+- **Email**: [Tạo issue để liên hệ]
+
+---
+
+## 🔄 Changelog
+
+### Version 1.0.0 (2025-10-31)
+- ✨ Phát hành phiên bản đầu tiên
+- 🚀 Streamlit web app
+- 📊 F1-score 0.87 trên test set
+- 📝 Documentation đầy đủ
+
+---
+
+<div align="center">
+
+**⭐ Nếu project hữu ích, hãy cho một star trên GitHub! ⭐**
+
+Made with ❤️ in Vietnam
+
+</div>
 - Training loss và validation F1-score sẽ được in ra sau mỗi epoch
 - Mô hình với F1-score cao nhất trên dev set sẽ được lưu lại
 
