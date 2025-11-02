@@ -34,11 +34,13 @@ Dự án này xây dựng hệ thống **Nhận dạng Thực thể có tên (Na
 - ✅ **Hiệu suất cao**: Fine-tuned PhoBERT (`vinai/phobert-base`) đạt F1-score cao
 - ✅ **Đa thực thể**: Nhận dạng 10 loại thực thể y tế khác nhau
 - ✅ **Word Segmentation**: Tích hợp VnCoreNLP để xử lý tiếng Việt chính xác
-- ✅ **Kiến trúc rõ ràng**: Code được tổ chức module hóa, dễ bảo trì và mở rộng
-- ✅ **Tái tạo được**: Random seed và requirements đầy đủ
-- ✅ **Demo tương tác**: Ứng dụng web Streamlit sẵn sàng sử dụng
-- ✅ **Hỗ trợ GPU**: Tối ưu cho cả CPU và GPU
-- ✅ **Colab Ready**: Jupyter notebook cho Google Colab
+- ✅ **2 chế độ sử dụng**: Manual Mode (kiểm soát) & Auto Mode (tự động với Gemini AI)
+- ✅ **Trích xuất thông minh**: Suy luận giới tính, nhóm entities, 8 loại ngày tháng
+- ✅ **Demo tương tác**: Ứng dụng web Streamlit với giao diện thân thiện
+- ✅ **Export CSV**: Xuất dữ liệu bệnh nhân đầy đủ, tương thích Excel
+- ✅ **Gemini AI**: Tự động tách văn bản nhiều bệnh nhân (API key built-in)
+- ✅ **Kiến trúc rõ ràng**: Code module hóa, dễ bảo trì và mở rộng
+- ✅ **Production-ready**: Error handling, caching, session state management
 
 ---
 
@@ -223,11 +225,11 @@ models/phobert-ner-covid/
 
 ## 🎯 Sử dụng
 
-### 1️⃣ Demo Web App (Dễ nhất - Khuyến nghị)
+### 1️⃣ Demo Web App - Tích hợp Manual + Auto Mode (Khuyến nghị ⭐)
 
-#### Cách 1: Sử dụng Script Wrapper (Khuyến nghị)
+#### 🚀 Quick Start
 
-Chạy ứng dụng web Streamlit với 1 lệnh duy nhất:
+Chạy ứng dụng web Streamlit với **2 chế độ tích hợp**:
 
 ```bash
 python run_app.py
@@ -236,46 +238,141 @@ python run_app.py
 **Script `run_app.py` tự động:**
 - ✅ Tìm và sử dụng Python từ virtual environment (`.venv`) nếu có
 - ✅ Fallback sang Python hệ thống nếu không có venv
+- ✅ Khởi chạy app tích hợp (`app_combined.py`)
 - ✅ Đặt working directory đúng về thư mục gốc project
-- ✅ Xử lý đường dẫn một cách portable (chạy được trên mọi máy)
-- ✅ Hiển thị thông tin debug hữu ích
 
-**Output mẫu:**
-```
-✓ Sử dụng Python từ virtual environment (.venv)
-✓ Python: D:\...\vietnamese_covid_ner\.venv\Scripts\python.exe
-✓ Working directory: D:\...\vietnamese_covid_ner
-✓ App path: D:\...\vietnamese_covid_ner\app\app.py
-
-  You can now view your Streamlit app in your browser.
-  Local URL: http://localhost:8501
-```
-
-#### Cách 2: Chạy trực tiếp Streamlit
-
-Nếu bạn muốn chạy trực tiếp mà không qua wrapper:
-
-```bash
-streamlit run app/app.py
-```
-
-**Lưu ý:** Cách này yêu cầu bạn phải đang ở đúng thư mục gốc của project.
+**App sẽ mở tại:** `http://localhost:8501`
 
 ---
 
-**Sau khi chạy:**
-1. Trình duyệt tự động mở tại `http://localhost:8501`
-2. Nhập văn bản tiếng Việt về COVID-19 vào ô text
-3. Nhấn nút **"Phân tích"**
-4. Xem kết quả với các thực thể được highlight màu
+#### 📱 Giao diện ứng dụng
 
-**Ví dụ input để thử:**
+App cung cấp **2 chế độ** trong 2 tabs:
+
+##### ✋ Manual Mode (Tab 1)
+**Dành cho:** Xử lý 1-2 bệnh nhân, kiểm soát từng bước
+
+**Workflow:**
+1. Nhập văn bản của **1 bệnh nhân**
+2. Nhấn **"Chạy NER"** để phân tích
+3. Xem entities được highlight màu
+4. Nhấn **"Trích xuất thông tin"**
+5. Kiểm tra kỹ thông tin
+6. Nhấn **"Thêm vào danh sách"** (hoặc bỏ qua nếu không đúng)
+7. Lặp lại cho các bệnh nhân khác
+8. **Tải xuống CSV** khi hoàn tất
+
+**Ví dụ input:**
 ```
-Bệnh nhân nữ 35 tuổi, mã số BN2345, quê ở Hà Nội, 
-nhập viện ngày 15/08/2021 với triệu chứng ho và sốt cao.
+Bệnh nhân BN001 là anh Nguyễn Văn An, 45 tuổi, làm kinh doanh. 
+Anh đi từ Hà Nội vào TP.HCM bằng máy bay ngày 15/3/2020. 
+Có triệu chứng sốt, ho từ ngày 18/3/2020. 
+Nhập viện ngày 21/3/2020 tại Bệnh viện Chớ Rẫy.
 ```
 
-**Dừng app**: `Ctrl + C` trong terminal
+**Ưu điểm:**
+- ✅ Kiểm soát hoàn toàn từng bước
+- ✅ Quyết định thêm/bỏ qua từng bệnh nhân
+- ✅ Phù hợp văn bản ngắn (1-2 BN)
+
+---
+
+##### 🤖 Auto Mode (Tab 2)
+**Dành cho:** Xử lý nhiều bệnh nhân (3+), tự động hoàn toàn
+
+**Workflow:**
+1. Dán văn bản dài chứa **nhiều bệnh nhân**
+2. Nhấn **"Xử lý tự động"**
+3. Gemini AI tự động:
+   - Tách văn bản thành N đoạn (mỗi đoạn = 1 BN)
+   - Chạy NER cho từng đoạn
+   - Trích xuất và **TỰ ĐỘNG THÊM** tất cả vào danh sách
+4. Xem kết quả (có thể xóa bỏ BN không đúng)
+5. **Tải xuống CSV**
+
+**Ví dụ input:**
+```
+Bệnh nhân 1 (BN001) là anh Nguyễn Văn An, 45 tuổi, nam...
+
+Bệnh nhân 2 tên là chị Trần Thị Bình, 32 tuổi, nữ...
+
+Cô Lê Thị Cúc (BN003), 58 tuổi...
+```
+
+**Ưu điểm:**
+- ✅ Tự động hoàn toàn, không cần tách thủ công
+- ✅ Xử lý nhanh nhiều bệnh nhân (3+ BN)
+- ✅ Gemini AI thông minh nhận diện ranh giới
+- ✅ **API Key đã được tích hợp sẵn** - không cần nhập
+
+**Lưu ý:**
+- ⚠️ Gemini API có rate limit (60 requests/phút)
+- ⚠️ Nên kiểm tra kết quả trước khi export CSV
+
+---
+
+#### 🎨 Tính năng nổi bật
+
+**1. Suy luận giới tính thông minh:**
+- Từ ngữ cảnh: anh, chị, cô, chú, bác, ông, bà, thầy
+- Từ tên: Văn, Đức, Hoàng (Nam) | Thị, Huyền, Lan (Nữ)
+- Từ nghề nghiệp: cô giáo, bác sĩ nam, y tá nữ
+
+**2. 8 loại ngày tháng:**
+- `date_of_birth`: Ngày sinh
+- `date_of_symptoms`: Ngày có triệu chứng
+- `date_of_testing`: Ngày xét nghiệm
+- `date_of_admission`: Ngày nhập viện
+- `date_of_discharge`: Ngày xuất viện
+- `date_of_quarantine`: Ngày cách ly
+- `date_of_declaration`: Ngày khai báo
+- `date_of_travel`: Ngày di chuyển
+
+**3. Export CSV:**
+- Đầy đủ thông tin (ID, Name, Age, Gender, Job, 8 date types, locations, organizations, symptoms, transportations)
+- Encoding UTF-8-sig (tương thích Excel)
+- Filename tự động: `benh_nhan_{mode}_{timestamp}.csv`
+
+**4. Performance:**
+- Model caching: Load 1 lần duy nhất
+- Session state: Giữ dữ liệu khi chuyển tab
+- Progress bar: Hiển thị tiến trình xử lý
+
+**5. UI/UX:**
+- Sidebar: Thống kê realtime
+- Expandable sections: Tiết kiệm không gian
+- Button xóa từng bệnh nhân (Auto Mode)
+- Preview CSV trước khi tải
+
+---
+
+#### 📊 So sánh 2 chế độ
+
+| Tiêu chí | Manual Mode | Auto Mode |
+|----------|-------------|-----------|
+| **Tốc độ** | Chậm (thủ công) | Nhanh ⚡ |
+| **Số BN phù hợp** | 1-2 | 3+ |
+| **Kiểm soát** | 🎯 Cao | 🤖 Tự động |
+| **Yêu cầu API** | ❌ Không | ✅ Gemini |
+| **Internet** | ❌ | ✅ |
+| **Độ chính xác** | Cao (kiểm tra từng BN) | Tốt (AI) |
+| **Thêm BN** | Thủ công (quyết định) | Tự động (tất cả) |
+
+---
+
+#### 📖 Chi tiết sử dụng
+
+Xem file **[USAGE_GUIDE.md](USAGE_GUIDE.md)** để biết:
+- Hướng dẫn chi tiết từng chế độ
+- Khi nào dùng chế độ nào
+- Xử lý lỗi thường gặp
+- Tips & tricks
+
+---
+
+#### 🛑 Dừng app
+
+Nhấn `Ctrl + C` trong terminal
 
 ---
 

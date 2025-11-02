@@ -1,7 +1,3 @@
-# src/predict.py
-#
-# Script này cung cấp một lớp (class) để thực hiện suy luận (inference)
-# trên dữ liệu mới bằng mô hình NER đã được huấn luyện.
 
 import torch
 from transformers import AutoTokenizer, AutoModelForTokenClassification
@@ -9,7 +5,7 @@ import numpy as np
 import sys
 import os
 import re
-from typing import List, Dict, Tuple, Optional
+from typing import List, Dict
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 

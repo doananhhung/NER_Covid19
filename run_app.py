@@ -23,7 +23,8 @@ else:
     print(" Sử dụng Python hệ thống")
     print(" Khuyến nghị: Tạo venv bằng lệnh: python -m venv .venv")
 
-app_path = os.path.join(project_root, 'app', 'app.py')
+# Sử dụng app_combined.py - tích hợp Manual + Auto Mode
+app_path = os.path.join(project_root, 'app', 'app_combined.py')
 
 # Hiển thị thông tin
 print(f" Python: {python_exe}")

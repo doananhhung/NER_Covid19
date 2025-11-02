@@ -13,6 +13,7 @@ applyTo: '**/*'
 * Trả lời tôi bằng tiếng Việt.
 * Không sử dụng icon cảm xúc (emoji) trong code hoặc comment.
 * Không tạo ra các file .md mới.
+* Trước khi viết code cần trình bày logic và cấu trúc code sẽ viết, khi được đồng ý mới viết code.
 
 ## 2. Phong cách Code (Quan trọng)
 * **Hạn chế `print`**: Tránh sử dụng câu lệnh `print()` cho việc gỡ lỗi (debug), hạn chế tốt đa việc dùng `print()` để thông báo bắt đầu làm gì đó. Ưu tiên sử dụng mô-đun `logging` nếu cần.

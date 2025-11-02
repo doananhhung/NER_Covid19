@@ -17,3 +17,6 @@ jupyterlab
 # --- Optional for Web App ---
 streamlit
 flask
+
+# --- Gemini AI for Auto Mode ---
+google-generativeai>=0.8.0
