@@ -52,7 +52,7 @@ def load_ner_model():
             return None
         return predictor
     except Exception as e:
-        st.error(f"❌ Lỗi khi tải mô hình: {e}")
+        st.error(f" Lỗi khi tải mô hình: {e}")
         return None
 
 
@@ -200,7 +200,7 @@ def manual_mode_tab(predictor: NERPredictor):
                 ner_results = predictor.predict(user_text)
                 st.session_state.manual_ner_results = ner_results
             except Exception as e:
-                st.error(f"❌ Lỗi khi chạy NER: {e}")
+                st.error(f" Lỗi khi chạy NER: {e}")
     
     # Display NER results
     if st.session_state.manual_ner_results:
@@ -228,7 +228,7 @@ def manual_mode_tab(predictor: NERPredictor):
                     )
                     st.session_state.manual_current_record = record
                 except Exception as e:
-                    st.error(f"❌ Lỗi khi trích xuất: {e}")
+                    st.error(f" Lỗi khi trích xuất: {e}")
     
     # Display extracted record
     if st.session_state.manual_current_record:
@@ -309,10 +309,25 @@ def auto_mode_tab(predictor: NERPredictor):
     if 'auto_processing_done' not in st.session_state:
         st.session_state.auto_processing_done = False
     
-    # API Key được cung cấp sẵn (built-in)
-    GEMINI_API_KEY = "AIzaSyBcwCckmaLuPYatKXKL9n6Pem6XpPIdJuM"
+    # Đọc API Key từ Streamlit secrets
+    try:
+        GEMINI_API_KEY = st.secrets["gemini"]["api_key"]
+    except (KeyError, FileNotFoundError):
+        st.error(" Chưa cấu hình Gemini API key!")
+        st.info("""
+        **Cách cấu hình:**
+        1. Lấy API key từ: https://makersuite.google.com/app/apikey
+        2. Tạo file `.streamlit/secrets.toml`
+        3. Thêm nội dung:
+        ```toml
+        [gemini]
+        api_key = "your-api-key-here"
+        ```
+        4. Khởi động lại app
+        """)
+        st.stop()
     
-    # Sidebar - Stats only (không cần nhập API key nữa)
+    # Sidebar - Stats only
     with st.sidebar:
         st.markdown("---")
         st.header("📊 Thống kê (Auto)")
@@ -365,7 +380,7 @@ def auto_mode_tab(predictor: NERPredictor):
                             st.warning(f"⚠️ Có lỗi: {metadata['error']}")
                     
                 except Exception as e:
-                    st.error(f"❌ Lỗi khi gọi Gemini API: {e}")
+                    st.error(f" Lỗi khi gọi Gemini API: {e}")
                     st.stop()
             
             # Step 2: Process each segment and auto-add to list
@@ -479,7 +494,7 @@ def main():
     predictor = load_ner_model()
     
     if predictor is None:
-        st.error("❌ Không thể tải mô hình. Vui lòng kiểm tra cấu hình.")
+        st.error(" Không thể tải mô hình. Vui lòng kiểm tra cấu hình.")
         st.stop()
     
     st.markdown("---")

@@ -24,6 +24,9 @@ data/processed/*
 .vscode/
 .idea/
 
+# Streamlit secrets - IMPORTANT: Never commit API keys
+.streamlit/secrets.toml
+
 vncorenlp_models/
 examples/
 test_text_processor.py
