@@ -83,6 +83,18 @@ Hệ thống nhận diện **10 loại entities** chính theo định dạng BIO
 - Xuất kết quả dưới dạng JSON hoặc CSV
 - Phù hợp xử lý văn bản dài, phức tạp
 
+### 4. Chrome Extension (MỚI)
+Extension trình duyệt để sử dụng NER trực tiếp trên web:
+
+#### **Tính năng chính:**
+- Xử lý văn bản từ trang web hiện tại hoặc nhập thủ công
+- Highlight entities trực tiếp trên trang web
+- Manual Mode và Auto Mode (với Gemini AI)
+- Xuất kết quả dạng JSON/CSV
+- Giao diện đơn giản, dễ sử dụng
+
+Xem hướng dẫn chi tiết tại: [Chrome Extension README](chrome_extension/README.md)
+
 ---
 
 ## Cài đặt
@@ -225,6 +237,37 @@ streamlit run app/app_combined.py
    - Hệ thống tự động tách và xử lý từng bệnh nhân
    - Xuất kết quả dưới dạng JSON/CSV
 
+### 5. Sử dụng Chrome Extension
+
+#### Cài đặt Extension
+
+1. **Cài đặt backend dependencies:**
+```bash
+pip install -r backend_api/requirements_api.txt
+```
+
+2. **Khởi động Backend API Server:**
+```bash
+python run_extension_server.py
+```
+Server sẽ chạy tại `http://localhost:8000`
+
+3. **Load Extension vào Chrome:**
+   - Mở Chrome và truy cập `chrome://extensions/`
+   - Bật "Developer mode"
+   - Click "Load unpacked"
+   - Chọn thư mục `chrome_extension/`
+
+#### Sử dụng Extension
+
+1. Click icon Extension trên toolbar
+2. Chọn nguồn dữ liệu: "Xử lý toàn bộ trang web" hoặc "Nhập văn bản thủ công"
+3. Chọn chế độ xử lý: Manual Mode hoặc Auto Mode
+4. Click "Phân tích"
+5. Xem kết quả và export CSV/JSON hoặc highlight trên trang
+
+Chi tiết xem tại: [Chrome Extension README](chrome_extension/README.md)
+
 ---
 
 ## Cấu trúc dự án
@@ -235,6 +278,7 @@ vietnamese_covid_ner/
 ├── README.md                          # File này
 ├── requirements.txt                   # Python dependencies
 ├── run_app.py                        # Script wrapper để chạy Streamlit app
+├── run_extension_server.py           # Script khởi động Backend API cho Extension
 ├── setup_vncorenlp.py                # Script setup VnCoreNLP
 │
 ├── data/                             # Thư mục dữ liệu
@@ -274,6 +318,21 @@ vietnamese_covid_ner/
 │   ├── __init__.py
 │   ├── app_combined.py               # Streamlit app (Manual + Auto mode)
 │   └── utils.py                      # Utility functions cho UI
+│
+├── backend_api/                      # Backend API cho Chrome Extension
+│   ├── __init__.py
+│   ├── main.py                       # FastAPI application
+│   ├── api_models.py                 # Pydantic models cho API
+│   └── requirements_api.txt          # Dependencies cho API server
+│
+├── chrome_extension/                 # Chrome Extension
+│   ├── manifest.json                 # Extension configuration
+│   ├── README.md                     # Hướng dẫn sử dụng Extension
+│   ├── icons/                        # Extension icons
+│   ├── popup/                        # Popup UI (HTML/CSS/JS)
+│   ├── content/                      # Content scripts
+│   ├── background/                   # Background service worker
+│   └── shared/                       # Shared utilities
 │
 ├── vncorenlp_models/                 # VnCoreNLP models
 │   └── models/

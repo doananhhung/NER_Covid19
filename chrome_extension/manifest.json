@@ -1,0 +1,51 @@
+{
+    "manifest_version": 3,
+    "name": "Vietnamese COVID-19 NER",
+    "version": "2.0.0",
+    "description": "Nhan dien thuc the va trich xuat thong tin benh nhan COVID-19 tu van ban tieng Viet",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting"
+    ],
+    "host_permissions": [
+        "http://localhost:8000/*"
+    ],
+    "background": {
+        "service_worker": "background/background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "shared/constants.js",
+                "shared/utils.js",
+                "content/floating-button.js",
+                "content/side-panel.js",
+                "content/content.js"
+            ],
+            "css": [
+                "content/floating-button.css",
+                "content/side-panel.css",
+                "content/highlight.css"
+            ],
+            "run_at": "document_idle"
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": [
+                "content/side-panel.html",
+                "content/side-panel.css",
+                "content/floating-button.css",
+                "shared/constants.js",
+                "shared/utils.js"
+            ],
+            "matches": [
+                "<all_urls>"
+            ]
+        }
+    ]
+}

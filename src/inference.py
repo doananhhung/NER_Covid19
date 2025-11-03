@@ -10,7 +10,7 @@ from typing import List, Dict
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import config
-from text_processor import get_text_processor
+from src.text_processor import get_text_processor
 
 class NERPredictor:
     """

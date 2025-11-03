@@ -106,17 +106,17 @@ class ManualPatientExtractor:
         
         # Thông tin nhận dạng
         if 'PATIENT_ID' in grouped:
-            record.patient_id = self._merge_texts(grouped['PATIENT_ID'])
+            record.patient_id = self._merge_texts_smart(grouped['PATIENT_ID'])
         
         if 'NAME' in grouped:
-            record.name = self._merge_texts(grouped['NAME'])
+            record.name = self._merge_texts_smart(grouped['NAME'])
         
         # Thông tin cá nhân
         if 'AGE' in grouped:
-            record.age = self._merge_texts(grouped['AGE'])
+            record.age = self._merge_texts_smart(grouped['AGE'])
         
         if 'GENDER' in grouped:
-            gender_text = self._merge_texts(grouped['GENDER'])
+            gender_text = self._merge_texts_smart(grouped['GENDER'])
             # Chuẩn hóa giới tính
             record.gender = self._normalize_gender(gender_text)
         
@@ -125,24 +125,24 @@ class ManualPatientExtractor:
             record.gender = self._infer_gender_from_context(raw_text, record.name or '')
         
         if 'JOB' in grouped:
-            record.job = self._merge_texts(grouped['JOB'])
+            record.job = self._merge_texts_smart(grouped['JOB'])
             # Nếu chưa có gender, thử suy luận từ job
             if not record.gender:
                 record.gender = self._infer_gender_from_job(record.job)
         
-        # Địa điểm & tổ chức
+        # Địa điểm & tổ chức (Deduplicate để tránh trùng lặp)
         if 'LOCATION' in grouped:
-            record.locations = [e.text for e in grouped['LOCATION']]
+            record.locations = list(dict.fromkeys([e.text for e in grouped['LOCATION']]))
         
         if 'ORGANIZATION' in grouped:
-            record.organizations = [e.text for e in grouped['ORGANIZATION']]
+            record.organizations = list(dict.fromkeys([e.text for e in grouped['ORGANIZATION']]))
         
         if 'TRANSPORTATION' in grouped:
-            record.transportations = [e.text for e in grouped['TRANSPORTATION']]
+            record.transportations = list(dict.fromkeys([e.text for e in grouped['TRANSPORTATION']]))
         
-        # Triệu chứng & bệnh
+        # Triệu chứng & bệnh (Deduplicate)
         if 'SYMPTOM_AND_DISEASE' in grouped:
-            record.symptoms_and_diseases = [e.text for e in grouped['SYMPTOM_AND_DISEASE']]
+            record.symptoms_and_diseases = list(dict.fromkeys([e.text for e in grouped['SYMPTOM_AND_DISEASE']]))
         
         # Xử lý DATE - phân loại theo keyword trong text
         if 'DATE' in grouped:
@@ -162,14 +162,82 @@ class ManualPatientExtractor:
         
         return record
     
-    def _merge_texts(self, entities: List[Entity]) -> str:
-        """Merge text của nhiều entities (dùng cho PATIENT_ID, NAME, AGE, etc.)"""
+    def _merge_texts_smart(self, entities: List[Entity]) -> str:
+        """
+        Smart merge: Ghép entities liền kề, bỏ qua duplicate ở xa
+        
+        Logic:
+        1. Group entities thành các "mentions" (nhóm liền kề nhau, gap < 5 chars)
+        2. Mỗi mention được merge thành 1 text
+        3. Deduplicate các mentions
+        4. Lấy mention đầu tiên (thường là complete nhất)
+        
+        Args:
+            entities: List of Entity objects với cùng tag type
+            
+        Returns:
+            str: Merged text đã deduplicate
+            
+        Examples:
+            Input: [Entity("BN123", start=0), Entity("BN123", start=50)]
+            Output: "BN123"
+            
+            Input: [Entity("Nguyễn", start=0), Entity("Văn", start=8), Entity("A", start=12)]
+            Output: "Nguyễn Văn A"
+            
+            Input: [Entity("Nguyễn", start=0), Entity("Văn", start=8), Entity("A", start=12),
+                    Entity("Nguyễn", start=50), Entity("Văn", start=58), Entity("A", start=62)]
+            Output: "Nguyễn Văn A" (duplicate mention removed)
+        """
         if not entities:
             return ""
+        
         if len(entities) == 1:
             return entities[0].text
-        # Nếu có nhiều entities, merge bằng space
-        return " ".join(e.text for e in entities)
+        
+        # Sort by position để xử lý theo thứ tự xuất hiện
+        sorted_entities = sorted(entities, key=lambda e: e.start)
+        
+        # Group entities thành các "mentions" (nhóm liền kề nhau)
+        mentions = []
+        current_mention = [sorted_entities[0]]
+        
+        for i in range(1, len(sorted_entities)):
+            prev = sorted_entities[i-1]
+            curr = sorted_entities[i]
+            
+            # Tính gap giữa 2 entities
+            gap = curr.start - prev.end
+            
+            # Nếu liền kề (gap < 5), thêm vào mention hiện tại
+            # Gap < 5 để handle các trường hợp có dấu cách, dấu phẩy giữa các entities
+            if gap < 5:
+                current_mention.append(curr)
+            else:
+                # Kết thúc mention hiện tại, bắt đầu mention mới
+                mentions.append(current_mention)
+                current_mention = [curr]
+        
+        # Thêm mention cuối cùng
+        mentions.append(current_mention)
+        
+        # Merge mỗi mention thành text
+        mention_texts = []
+        for mention in mentions:
+            # Join các entity texts trong mention bằng space
+            mention_text = " ".join(e.text for e in mention).strip()
+            if mention_text:  # Chỉ thêm nếu không rỗng
+                mention_texts.append(mention_text)
+        
+        if not mention_texts:
+            return ""
+        
+        # Deduplicate mention texts (giữ thứ tự, lấy lần xuất hiện đầu tiên)
+        unique_mentions = list(dict.fromkeys(mention_texts))
+        
+        # Lấy mention đầu tiên (thường là complete nhất và xuất hiện đầu tiên)
+        # Có thể customize để lấy longest mention nếu cần
+        return unique_mentions[0]
     
     def _normalize_gender(self, gender: str) -> str:
         """
@@ -243,11 +311,13 @@ class ManualPatientExtractor:
                     matched_type = date_type
                     break
             
-            # Gán vào record
+            # Gán vào record (check duplicate trước khi thêm)
             if matched_type:
-                record.dates[matched_type].append(date_entity.text)
+                if date_entity.text not in record.dates[matched_type]:
+                    record.dates[matched_type].append(date_entity.text)
             else:
-                record.dates['unknown_date'].append(date_entity.text)
+                if date_entity.text not in record.dates['unknown_date']:
+                    record.dates['unknown_date'].append(date_entity.text)
     
     def _infer_gender_from_context(self, text: str, name: str = "") -> str:
         """

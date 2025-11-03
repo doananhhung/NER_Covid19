@@ -1,0 +1,142 @@
+/* chrome_extension/content/highlight.css */
+/* Styles cho highlighting entities tren trang web */
+
+.ner-entity {
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: help;
+    position: relative;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.ner-entity:hover {
+    opacity: 0.8;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Mau sac theo entity type */
+.ner-PATIENT_ID {
+    background-color: #f9c5c7;
+    border-bottom: 2px solid #e57373;
+}
+
+.ner-NAME {
+    background-color: #ffcccb;
+    border-bottom: 2px solid #ef5350;
+}
+
+.ner-AGE {
+    background-color: #fdfd96;
+    border-bottom: 2px solid #ffd54f;
+}
+
+.ner-GENDER {
+    background-color: #87ceeb;
+    border-bottom: 2px solid #42a5f5;
+}
+
+.ner-JOB {
+    background-color: #f5deb3;
+    border-bottom: 2px solid #ffb74d;
+}
+
+.ner-LOCATION {
+    background-color: #ace4aa;
+    border-bottom: 2px solid #66bb6a;
+}
+
+.ner-ORGANIZATION {
+    background-color: #c7b5e4;
+    border-bottom: 2px solid #ab47bc;
+}
+
+.ner-SYMPTOM_AND_DISEASE {
+    background-color: #b2d8d8;
+    border-bottom: 2px solid #26c6da;
+}
+
+.ner-TRANSPORTATION {
+    background-color: #d3d3d3;
+    border-bottom: 2px solid #9e9e9e;
+}
+
+.ner-DATE {
+    background-color: #ffb347;
+    border-bottom: 2px solid #ff9800;
+}
+
+/* Notification khi highlight xong */
+.ner-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border: 2px solid #4CAF50;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 999999;
+    min-width: 250px;
+    animation: slideIn 0.3s ease;
+}
+
+.ner-notification.fade-out {
+    animation: slideOut 0.3s ease;
+}
+
+.ner-notification-content {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.ner-notification-content strong {
+    color: #4CAF50;
+    font-size: 16px;
+}
+
+.ner-notification-content p {
+    margin: 0;
+    color: #333;
+    font-size: 14px;
+}
+
+#ner-clear-highlights {
+    background: #f44336;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background 0.2s;
+}
+
+#ner-clear-highlights:hover {
+    background: #d32f2f;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}

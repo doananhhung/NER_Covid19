@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>COVID-19 NER Panel</title>
+</head>
+
+<body>
+    <div id="ner-side-panel">
+        <!-- Header -->
+        <div class="panel-header">
+            <h2>🦠 COVID-19 NER</h2>
+            <button id="close-panel-btn" class="close-btn" title="Đóng panel">✕</button>
+        </div>
+
+        <!-- Content Wrapper - CUỘN TOÀN BỘ -->
+        <div class="panel-content-wrapper">
+            <!-- Controls -->
+            <div class="panel-controls">
+                <!-- Input Source -->
+                <div class="control-group">
+                    <label class="control-label">Nguồn văn bản:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="input-source" value="webpage" checked>
+                            <span>Trang web hiện tại</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="input-source" value="manual">
+                            <span>Nhập thủ công</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Manual Input Area -->
+                <div id="manual-input-area" class="control-group" style="display: none;">
+                    <label class="control-label" for="manual-text-input">Nhập văn bản:</label>
+                    <textarea id="manual-text-input" placeholder="Nhập văn bản về bệnh nhân COVID-19..."
+                        rows="6"></textarea>
+                </div>
+
+                <!-- Processing Mode -->
+                <div class="control-group">
+                    <label class="control-label">Chế độ xử lý:</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="processing-mode" value="manual" checked>
+                            <span>Thủ công (1 bệnh nhân)</span>
+                        </label>
+                        <label class="radio-label" id="auto-mode-label">
+                            <input type="radio" name="processing-mode" value="auto">
+                            <span>Tự động (nhiều bệnh nhân)</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <button id="analyze-btn" class="btn-primary">
+                    🔍 Phân tích
+                </button>
+
+                <!-- Server Status -->
+                <div id="server-status" class="status-indicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Đang kiểm tra server...</span>
+                </div>
+            </div>
+
+            <!-- Results Area -->
+            <div id="results-area" class="results-area" style="display: none;">
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="entities">Entities</button>
+                    <button class="tab-btn" data-tab="patients">Bệnh nhân</button>
+                </div>
+
+                <!-- Tab Contents -->
+                <div class="tab-content">
+                    <!-- Entities Tab -->
+                    <div id="entities-tab" class="tab-pane active">
+                        <div class="result-header">
+                            <h3>Entities đã trích xuất</h3>
+                            <div class="result-actions">
+                                <button id="highlight-entities-btn" class="btn-secondary btn-sm" style="display: none;">
+                                    🖍️ Highlight
+                                </button>
+                                <button id="copy-entities-csv-btn" class="btn-secondary btn-sm">
+                                    📋 Copy CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div id="entities-list" class="entities-list"></div>
+                    </div>
+
+                    <!-- Patients Tab -->
+                    <div id="patients-tab" class="tab-pane">
+                        <div class="result-header">
+                            <h3>Thông tin bệnh nhân</h3>
+                            <div class="result-actions">
+                                <button id="undo-delete-btn" class="btn-secondary btn-sm" style="display: none;">
+                                    ↶ Hoàn tác
+                                </button>
+                                <button id="copy-patients-csv-btn" class="btn-secondary btn-sm">
+                                    📋 Copy CSV
+                                </button>
+                                <button id="download-patients-csv-btn" class="btn-secondary btn-sm">
+                                    💾 Tải CSV
+                                </button>
+                            </div>
+                        </div>
+                        <div id="patients-list" class="patients-list"></div>
+                    </div>
+                </div>
+
+                <!-- Processing Info -->
+                <div id="processing-info" class="processing-info"></div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="spinner"></div>
+            <p>Đang xử lý...</p>
+        </div>
+    </div>
+</body>
+
+</html>

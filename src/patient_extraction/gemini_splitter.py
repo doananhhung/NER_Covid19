@@ -6,6 +6,10 @@ mỗi đoạn tương ứng với thông tin của 1 bệnh nhân.
 
 from typing import List, Optional, Tuple
 import re
+import logging
+
+# Get logger
+logger = logging.getLogger("ner_api")
 
 
 class GeminiTextSplitter:
@@ -32,15 +36,13 @@ class GeminiTextSplitter:
             import google.generativeai as genai
             genai.configure(api_key=self.api_key)
             self.client = genai
-            print("Gemini API client initialized successfully")
+            logger.info("Gemini API client initialized successfully")
         except ImportError as ie:
-            print(f"Lỗi: Chưa cài đặt google-generativeai. Chạy: pip install google-generativeai")
-            print(f"   Chi tiết: {ie}")
+            error_msg = f"Lỗi: Chưa cài đặt google-generativeai. Chạy: pip install google-generativeai"
+            logger.error(f"{error_msg} | Chi tiết: {ie}")
             self.client = None
         except Exception as e:
-            print(f"Lỗi khởi tạo Gemini client: {e}")
-            import traceback
-            traceback.print_exc()
+            logger.error(f"Lỗi khởi tạo Gemini client: {e}", exc_info=True)
             self.client = None
     
     def is_available(self) -> bool:
@@ -66,6 +68,8 @@ class GeminiTextSplitter:
         if not self.is_available():
             raise RuntimeError("Gemini API không khả dụng. Kiểm tra API key và cài đặt.")
         
+        logger.info(f"Calling Gemini API to split text (length: {len(text)} chars)...")
+        
         # Tạo prompt cho Gemini
         prompt = self._create_splitting_prompt(text)
         
@@ -74,13 +78,21 @@ class GeminiTextSplitter:
             model = self.client.GenerativeModel(self.model_name)
             response = model.generate_content(prompt)
             
+            logger.info(f"Gemini API response received (length: {len(response.text)} chars)")
+            
             # Parse response
             segments = self._parse_response(response.text)
             
             # Validate segments
             if not segments:
-                print("Gemini không tách được văn bản. Trả về toàn bộ văn bản gốc.")
+                logger.warning("Gemini không tách được văn bản. Trả về toàn bộ văn bản gốc.")
                 segments = [text]
+            else:
+                logger.info(f"Successfully parsed {len(segments)} segment(s) from Gemini response")
+                for i, seg in enumerate(segments, 1):
+                    logger.info(f"--- FULL SEGMENT {i}/{len(segments)} ({len(seg)} chars) ---")
+                    logger.info(f"{seg}")
+                    logger.info(f"--- END SEGMENT {i} ---")
             
             metadata = {
                 'original_length': len(text),
@@ -93,7 +105,7 @@ class GeminiTextSplitter:
             return segments
             
         except Exception as e:
-            print(f" Lỗi khi gọi Gemini API: {e}")
+            logger.error(f"Lỗi khi gọi Gemini API: {e}", exc_info=True)
             # Fallback: trả về văn bản gốc
             if return_metadata:
                 return [text], {'error': str(e)}
@@ -147,14 +159,19 @@ Kết quả (chỉ trả về các đoạn đã tách, không giải thích):
         Returns:
             List[str]: Danh sách các đoạn văn bản
         """
+        logger.info("Parsing Gemini response to extract patient segments...")
+        
         # Pattern để tìm các đoạn PATIENT
         pattern = r'---PATIENT_\d+---(.*?)---END---'
         matches = re.findall(pattern, response_text, re.DOTALL)
         
         if matches:
+            logger.info(f"Found {len(matches)} patient segments using pattern matching")
             # Làm sạch các đoạn
             segments = [match.strip() for match in matches if match.strip()]
             return segments
+        
+        logger.warning("No pattern match found, trying fallback method (line-by-line parsing)")
         
         # Nếu không match được pattern, thử tách theo số thứ tự
         # Ví dụ: "Bệnh nhân 1:", "Bệnh nhân 2:", etc.
@@ -174,7 +191,9 @@ Kết quả (chỉ trả về các đoạn đã tách, không giải thích):
         if current_segment:
             segments.append('\n'.join(current_segment).strip())
         
-        return [s for s in segments if s]  # Loại bỏ empty strings
+        result = [s for s in segments if s]  # Loại bỏ empty strings
+        logger.info(f"Fallback parsing found {len(result)} segment(s)")
+        return result
 
 
 def split_text_with_gemini(
