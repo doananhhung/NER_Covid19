@@ -1,41 +1,51 @@
 # Vietnamese COVID-19 Named Entity Recognition (NER)
 
-Dự án **Named Entity Recognition (NER)** cho văn bản tiếng Việt liên quan đến COVID-19, sử dụng mô hình **PhoBERT** để nhận diện và trích xuất thông tin bệnh nhân từ các văn bản y tế.
+Hệ thống **Named Entity Recognition (NER)** cho văn bản tiếng Việt liên quan đến COVID-19, sử dụng mô hình **PhoBERT** để nhận diện và trích xuất thông tin bệnh nhân từ các văn bản y tế.
 
-## Mục lục
+[![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://www.python.org/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.0+-red.svg)](https://pytorch.org/)
+[![Transformers](https://img.shields.io/badge/Transformers-4.30+-orange.svg)](https://huggingface.co/transformers/)
+
+## 📋 Mục lục
 
 - [Giới thiệu](#giới-thiệu)
 - [Entities được nhận diện](#entities-được-nhận-diện)
-- [Tính năng chính](#tính-năng-chính)
+- [Kiến trúc hệ thống](#kiến-trúc-hệ-thống)
 - [Cài đặt](#cài-đặt)
 - [Sử dụng](#sử-dụng)
 - [Cấu trúc dự án](#cấu-trúc-dự-án)
-- [Dataset](#dataset)
-- [Mô hình](#mô-hình)
+- [Dataset & Model](#dataset--model)
+- [Technical Details](#technical-details)
 
 ---
 
-## Giới thiệu
+## 🎯 Giới thiệu
 
-Dự án này xây dựng một hệ thống NER (Named Entity Recognition) để tự động nhận diện và trích xuất thông tin từ các văn bản y tế tiếng Việt liên quan đến COVID-19. Hệ thống sử dụng:
+Dự án này xây dựng một hệ thống NER hoàn chỉnh để tự động nhận diện và trích xuất thông tin từ các văn bản y tế tiếng Việt liên quan đến COVID-19.
+
+### Công nghệ sử dụng
 
 - **PhoBERT** (`vinai/phobert-base`) - Mô hình ngôn ngữ tiếng Việt pre-trained
 - **VnCoreNLP** - Công cụ tách từ tiếng Việt
 - **PhoNER_COVID19** - Dataset được gán nhãn cho bài toán NER
-- **Streamlit** - Giao diện web demo tương tác
-- **Gemini AI** - Hỗ trợ trích xuất thông tin tự động (chế độ Auto)
+- **FastAPI** - Backend API server
+- **Chrome Extension** - Giao diện người dùng chính
+- **Streamlit** - Web app demo (optional)
+- **Gemini AI** - Hỗ trợ tách văn bản nhiều bệnh nhân
 
 ### Ứng dụng thực tế
 
-- Trích xuất thông tin bệnh nhân từ báo cáo y tế
-- Tự động hóa việc ghi nhận thông tin trong hệ thống quản lý y tế
-- Hỗ trợ phân tích dữ liệu dịch bệnh COVID-19
+- ✅ Trích xuất thông tin bệnh nhân từ báo cáo y tế
+- ✅ Tự động hóa việc ghi nhận thông tin trong hệ thống quản lý
+- ✅ Hỗ trợ phân tích dữ liệu dịch bệnh COVID-19
+- ✅ Highlight entities trực tiếp trên trang web
+- ✅ Xuất dữ liệu sang Excel/CSV
 
 ---
 
-## Entities được nhận diện
+## 🏷️ Entities được nhận diện
 
-Hệ thống nhận diện **10 loại entities** chính theo định dạng BIO tagging:
+Hệ thống nhận diện **10 loại entities** theo định dạng BIO tagging:
 
 | Entity Type | Mô tả | Ví dụ |
 |-------------|-------|-------|
@@ -43,67 +53,67 @@ Hệ thống nhận diện **10 loại entities** chính theo định dạng BIO
 | **NAME** | Họ và tên bệnh nhân | Nguyễn Văn A, Trần Thị B |
 | **AGE** | Tuổi, độ tuổi | 35 tuổi, 40 |
 | **GENDER** | Giới tính | nam, nữ |
-| **JOB** | Nghề nghiệp | bác sĩ, công nhân |
+| **JOB** | Nghề nghiệp | bác sĩ, công nhân, giáo viên |
 | **LOCATION** | Địa điểm | Hà Nội, quận 1, phường Bến Nghé |
 | **ORGANIZATION** | Tổ chức, cơ quan | Bệnh viện Bạch Mai, CDC |
-| **SYMPTOM_AND_DISEASE** | Triệu chứng và bệnh | sốt, ho, COVID-19 |
-| **TRANSPORTATION** | Phương tiện di chuyển | xe buýt, chuyến bay VN123 |
+| **SYMPTOM_AND_DISEASE** | Triệu chứng và bệnh | sốt, ho, COVID-19, khó thở |
+| **TRANSPORTATION** | Phương tiện di chuyển | xe buýt, chuyến bay VN123, taxi |
 | **DATE** | Ngày tháng, thời gian | 15/3/2021, ngày 20 tháng 4 |
 
-**Định dạng tagging:**
+**Định dạng BIO tagging:**
 - `B-[ENTITY]`: Beginning - Token đầu tiên của entity
-- `I-[ENTITY]`: Inside - Token tiếp theo của entity
+- `I-[ENTITY]`: Inside - Token tiếp theo của entity (cho multi-word entities)
 - `O`: Outside - Không thuộc entity nào
 
 ---
 
-## Tính năng chính
+## 🏗️ Kiến trúc hệ thống
 
-### 1. Training & Evaluation
-- Huấn luyện mô hình NER với PhoBERT
-- Đánh giá mô hình với metrics (Precision, Recall, F1-score)
-- Hỗ trợ fine-tuning với custom hyperparameters
-
-### 2. Inference
-- Dự đoán entities từ văn bản tiếng Việt
-- Tự động tách từ với VnCoreNLP
-- Xử lý chính xác sub-word tokens
-
-### 3. Web Application (Streamlit)
-Ứng dụng web với 2 chế độ hoạt động:
-
-#### **Manual Mode (Chế độ Thủ công)**
-- Nhập văn bản trực tiếp
-- Hiển thị entities được nhận diện với highlight màu sắc
-- Trích xuất thông tin bệnh nhân từ văn bản đơn
-
-#### **Auto Mode (Chế độ Tự động)**
-- Tích hợp Gemini AI để tự động tách văn bản nhiều bệnh nhân
-- Trích xuất thông tin nhiều bệnh nhân cùng lúc
-- Xuất kết quả dưới dạng JSON hoặc CSV
-- Phù hợp xử lý văn bản dài, phức tạp
-
-### 4. Chrome Extension (MỚI)
-Extension trình duyệt để sử dụng NER trực tiếp trên web:
-
-#### **Tính năng chính:**
-- Xử lý văn bản từ trang web hiện tại hoặc nhập thủ công
-- Highlight entities trực tiếp trên trang web
-- Manual Mode và Auto Mode (với Gemini AI)
-- Xuất kết quả dạng JSON/CSV
-- Giao diện đơn giản, dễ sử dụng
-
-Xem hướng dẫn chi tiết tại: [Chrome Extension README](chrome_extension/README.md)
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      CHROME EXTENSION (UI)                      │
+│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐  │
+│  │ Floating    │  │  Side Panel  │  │  Highlight Entities   │  │
+│  │   Button    │→ │   (450px)    │→ │   on Webpage         │  │
+│  └─────────────┘  └──────────────┘  └───────────────────────┘  │
+└────────────────────────────┬────────────────────────────────────┘
+                             │ HTTP API Calls
+                             ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                   FASTAPI BACKEND SERVER                        │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  Endpoints:                                             │   │
+│  │  • POST /api/ner/extract-manual  (1 bệnh nhân)         │   │
+│  │  • POST /api/ner/extract-auto    (nhiều bệnh nhân)     │   │
+│  │  • GET  /api/health              (health check)        │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└────────────────────────────┬────────────────────────────────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        ↓                    ↓                    ↓
+┌───────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│  NER Model    │  │ Gemini AI        │  │  VnCoreNLP       │
+│  (PhoBERT)    │  │ (Text Splitter)  │  │  (Word Segment)  │
+└───────────────┘  └──────────────────┘  └──────────────────┘
+        ↓                    ↓                    ↓
+┌─────────────────────────────────────────────────────────────────┐
+│             PATIENT EXTRACTION & DEDUPLICATION                  │
+│  • Smart Merge Algorithm (position-based)                      │
+│  • Date Classification (9 types)                               │
+│  • Entity Grouping & Validation                                │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Cài đặt
+## 📦 Cài đặt
 
 ### Yêu cầu hệ thống
 
 - Python 3.8 trở lên
-- CUDA-compatible GPU (khuyến nghị cho training)
-- 4GB RAM trở lên
+- Chrome Browser (cho Extension)
+- 4GB RAM (khuyến nghị 8GB)
+- GPU (optional, cho training nhanh hơn)
 
 ### Bước 1: Clone repository
 
@@ -112,11 +122,16 @@ git clone https://github.com/doananhhung/NER_Covid19.git
 cd vietnamese_covid_ner
 ```
 
-### Bước 2: Tạo môi trường ảo (khuyến nghị)
+### Bước 2: Tạo môi trường ảo
 
 ```bash
+# Windows
 python -m venv .venv
 .venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv .venv
+source .venv/bin/activate
 ```
 
 ### Bước 3: Cài đặt dependencies
@@ -125,66 +140,129 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### Bước 4: Setup VnCoreNLP
-
-Tải và giải nén models cho VnCoreNLP:
+### Bước 4: Setup VnCoreNLP (tách từ tiếng Việt)
 
 ```bash
 python setup_vncorenlp.py
 ```
 
-Script này sẽ tự động tải VnCoreNLP models vào thư mục `vncorenlp_models/`.
+Script này sẽ tự động:
+- Download VnCoreNLP models
+- Giải nén vào thư mục `vncorenlp_models/`
+- Verify installation
 
-### Bước 5: Cấu hình Gemini API (Optional - cho Auto Mode)
+### Bước 5: Chuẩn bị Model
 
-Nếu muốn sử dụng chế độ Auto Mode:
+**Option 1: Download pre-trained model (khuyên dùng)**
 
-1. Lấy API key từ [Google AI Studio](https://makersuite.google.com/app/apikey)
-2. Tạo file `.streamlit/secrets.toml`:
+📥 **Download model đã train sẵn:**
+- Link Google Drive: [https://drive.google.com/drive/folders/1GNf_xUUrswxe3feUWCaTyyLbzFnLfLHS?usp=drive_link](https://drive.google.com/drive/folders/1GNf_xUUrswxe3feUWCaTyyLbzFnLfLHS?usp=drive_link)
+- Download toàn bộ thư mục `phobert-ner-covid/`
+- Giải nén vào `models/phobert-ner-covid/`
 
-```toml
-[gemini]
-api_key = "your-gemini-api-key-here"
+**Cấu trúc thư mục sau khi giải nén:**
+```
+models/phobert-ner-covid/
+├── config.json
+├── model.safetensors
+├── vocab.txt
+├── bpe.codes
+├── tokenizer_config.json
+├── special_tokens_map.json
+└── added_tokens.json
 ```
 
-**Lưu ý:** Không commit file `secrets.toml` lên repository.
-
----
-
-## Sử dụng
-
-### 1. Training - Huấn luyện mô hình
-
-Huấn luyện mô hình NER từ đầu:
-
+**Option 2: Train model từ đầu**
 ```bash
 python src/train.py
 ```
 
-**Cấu hình training** có thể thay đổi trong `src/config.py`:
-- `MAX_LEN`: Độ dài tối đa sequence (mặc định: 256)
-- `TRAIN_BATCH_SIZE`: Batch size training (mặc định: 8)
-- `EPOCHS`: Số epochs (mặc định: 5)
-- `LEARNING_RATE`: Learning rate (mặc định: 3e-5)
+Training config trong `src/config.py`:
+- Epochs: 10
+- Batch size: 16
+- Learning rate: 2e-5
+- Max length: 256 tokens
 
-Mô hình sau khi huấn luyện sẽ được lưu trong `models/phobert-ner-covid/`.
+### Bước 6: (Optional) Cấu hình Gemini API
 
-### 2. Evaluation - Đánh giá mô hình
-
-Đánh giá mô hình trên test set:
+Cho chế độ Auto Mode (tách nhiều bệnh nhân):
 
 ```bash
-python src/evaluate.py
+# Windows PowerShell
+$env:GEMINI_API_KEY = "your-api-key-here"
+
+# Windows CMD
+set GEMINI_API_KEY=your-api-key-here
+
+# Linux/Mac
+export GEMINI_API_KEY="your-api-key-here"
 ```
 
-Kết quả sẽ hiển thị:
-- Overall metrics (Precision, Recall, F1-score)
-- Per-entity metrics
-- Confusion matrix (optional)
+Hoặc tạo file `.env`:
+```env
+GEMINI_API_KEY=your-api-key-here
+```
 
-### 3. Inference - Dự đoán
+Lấy API key tại: https://makersuite.google.com/app/apikey
 
-Sử dụng mô hình để dự đoán entities từ văn bản:
+---
+
+## 🚀 Sử dụng
+
+### 1. Chrome Extension (Khuyên dùng - Giao diện chính)
+
+#### Khởi động Backend Server
+
+```bash
+python run_extension_server.py
+```
+
+Server chạy tại: `http://localhost:8000`
+
+#### Cài đặt Extension
+
+1. Mở Chrome, truy cập `chrome://extensions/`
+2. Bật "Developer mode"
+3. Click "Load unpacked"
+4. Chọn thư mục `chrome_extension/`
+
+#### Sử dụng
+
+1. **Nút 🦠** xuất hiện ở góc phải mọi trang web
+2. Click để mở **Side Panel**
+3. Chọn nguồn:
+   - "Trang web hiện tại" - Lấy text từ trang
+   - "Nhập thủ công" - Paste văn bản
+4. Chọn chế độ:
+   - "Thủ công" - 1 bệnh nhân
+   - "Tự động" - Nhiều bệnh nhân (cần Gemini)
+5. Click "Phân tích"
+6. Xem kết quả trong 2 tabs: Entities / Bệnh nhân
+7. Export: Copy CSV / Download CSV / Highlight
+
+**Xem chi tiết:** [Chrome Extension README](chrome_extension/README.md)
+
+---
+
+### 2. Streamlit Web App (Demo)
+
+```bash
+python run_app.py
+```
+
+App chạy tại: `http://localhost:8501`
+
+**Tính năng:**
+- Upload/paste văn bản
+- 2 chế độ: Manual và Auto
+- Hiển thị entities với màu highlight
+- Export JSON/CSV
+
+---
+
+### 3. Python API (Programmatic)
+
+#### Inference cơ bản
 
 ```python
 from src.inference import NERPredictor
@@ -196,410 +274,362 @@ predictor = NERPredictor(
 )
 
 # Dự đoán
-text = "Bệnh nhân 123 là Nguyễn Văn A, 35 tuổi, nam, sống tại Hà Nội."
-predictions = predictor.predict(text)
+text = "Bệnh nhân BN123, nam, 35 tuổi, nghề nghiệp giáo viên."
+entities = predictor.predict(text)
 
-# Hiển thị kết quả
-for pred in predictions:
-    print(f"{pred['word']}: {pred['tag']}")
+# entities: List[Dict]
+# [
+#   {"text": "BN123", "tag": "PATIENT_ID", "start": 11, "end": 16},
+#   {"text": "nam", "tag": "GENDER", "start": 18, "end": 21},
+#   ...
+# ]
 ```
 
-### 4. Chạy Web Application
+#### Trích xuất thông tin bệnh nhân
 
-#### Cách 1: Sử dụng script wrapper (khuyến nghị)
+```python
+from src.patient_extraction.manual_extractor import extract_single_patient
 
-```bash
-python run_app.py
+# Entities từ NER model
+entities = predictor.predict(text)
+
+# Trích xuất thông tin
+patient = extract_single_patient(entities)
+
+print(patient.patient_id)  # "BN123"
+print(patient.name)         # "Nguyễn Văn A"
+print(patient.age)          # "35"
+print(patient.gender)       # "nam"
+print(patient.locations)    # ["Hà Nội", "Quận 1"]
 ```
 
-Script này tự động:
-- Phát hiện và sử dụng virtual environment nếu có
-- Thiết lập đúng working directory
-- Chạy Streamlit app với cấu hình tối ưu
+#### Auto Mode với Gemini
 
-#### Cách 2: Chạy trực tiếp với Streamlit
+```python
+from src.patient_extraction.gemini_splitter import split_text_with_gemini
 
-```bash
-streamlit run app/app_combined.py
+# Văn bản nhiều bệnh nhân
+long_text = """
+Bệnh nhân BN123, nam, 35 tuổi...
+Bệnh nhân BN124, nữ, 28 tuổi...
+"""
+
+# Tách văn bản
+segments = split_text_with_gemini(long_text, api_key="your-key")
+
+# Xử lý từng segment
+patients = []
+for segment in segments:
+    entities = predictor.predict(segment)
+    patient = extract_single_patient(entities)
+    patients.append(patient)
 ```
-
-**Truy cập ứng dụng:** Mở trình duyệt tại `http://localhost:8501`
-
-#### Sử dụng Web App
-
-1. **Manual Mode**:
-   - Nhập văn bản về 1 bệnh nhân
-   - Xem entities được highlight
-   - Xem thông tin bệnh nhân được trích xuất
-
-2. **Auto Mode** (cần Gemini API key):
-   - Nhập văn bản dài chứa nhiều bệnh nhân
-   - Hệ thống tự động tách và xử lý từng bệnh nhân
-   - Xuất kết quả dưới dạng JSON/CSV
-
-### 5. Sử dụng Chrome Extension
-
-#### Cài đặt Extension
-
-1. **Cài đặt backend dependencies:**
-```bash
-pip install -r backend_api/requirements_api.txt
-```
-
-2. **Khởi động Backend API Server:**
-```bash
-python run_extension_server.py
-```
-Server sẽ chạy tại `http://localhost:8000`
-
-3. **Load Extension vào Chrome:**
-   - Mở Chrome và truy cập `chrome://extensions/`
-   - Bật "Developer mode"
-   - Click "Load unpacked"
-   - Chọn thư mục `chrome_extension/`
-
-#### Sử dụng Extension
-
-1. Click icon Extension trên toolbar
-2. Chọn nguồn dữ liệu: "Xử lý toàn bộ trang web" hoặc "Nhập văn bản thủ công"
-3. Chọn chế độ xử lý: Manual Mode hoặc Auto Mode
-4. Click "Phân tích"
-5. Xem kết quả và export CSV/JSON hoặc highlight trên trang
-
-Chi tiết xem tại: [Chrome Extension README](chrome_extension/README.md)
 
 ---
 
-## Cấu trúc dự án
+## 📁 Cấu trúc dự án
 
 ```
 vietnamese_covid_ner/
+├── src/                              # Core NER modules
+│   ├── config.py                     # Cấu hình (paths, hyperparameters)
+│   ├── dataset.py                    # PyTorch Dataset cho training
+│   ├── train.py                      # Training script
+│   ├── evaluate.py                   # Evaluation với seqeval
+│   ├── inference.py                  # NER Predictor
+│   ├── text_processor.py             # VnCoreNLP wrapper
+│   └── patient_extraction/           # Patient info extraction
+│       ├── entity_structures.py      # Entity, PatientRecord dataclasses
+│       ├── manual_extractor.py       # Logic trích xuất + smart merge
+│       └── gemini_splitter.py        # Gemini text splitting
 │
-├── README.md                          # File này
-├── requirements.txt                   # Python dependencies
-├── run_app.py                        # Script wrapper để chạy Streamlit app
-├── run_extension_server.py           # Script khởi động Backend API cho Extension
-├── setup_vncorenlp.py                # Script setup VnCoreNLP
+├── backend_api/                      # FastAPI server
+│   ├── main.py                       # API endpoints
+│   ├── api_models.py                 # Pydantic models
+│   └── logger.py                     # Logging utilities
 │
-├── data/                             # Thư mục dữ liệu
-│   └── raw/
-│       └── PhoNER_COVID19/           # Dataset PhoNER_COVID19
-│           ├── train_word.json       # Training set
-│           ├── dev_word.json         # Development set
-│           └── test_word.json        # Test set
-│
-├── models/                           # Thư mục lưu mô hình
-│   └── phobert-ner-covid/            # Mô hình PhoBERT đã fine-tune
-│       ├── config.json
-│       ├── model.safetensors
-│       ├── vocab.txt
-│       └── ...
-│
-├── notebooks/                        # Jupyter notebooks
-│   ├── Data_Exploration.ipynb        # Phân tích và khảo sát dữ liệu
-│   └── Train_on_Colab_basic.ipynb    # Training trên Google Colab
-│
-├── src/                              # Source code chính
-│   ├── __init__.py
-│   ├── config.py                     # Cấu hình tập trung (paths, hyperparameters)
-│   ├── dataset.py                    # PyTorch Dataset cho NER
-│   ├── train.py                      # Script training
-│   ├── evaluate.py                   # Script evaluation
-│   ├── inference.py                  # NERPredictor class
-│   ├── text_processor.py             # Xử lý văn bản tiếng Việt
-│   │
-│   └── patient_extraction/           # Module trích xuất thông tin bệnh nhân
-│       ├── __init__.py
-│       ├── entity_structures.py      # Định nghĩa data structures
-│       ├── manual_extractor.py       # Trích xuất thủ công
-│       └── gemini_splitter.py        # Tách văn bản với Gemini AI
-│
-├── app/                              # Web application
-│   ├── __init__.py
-│   ├── app_combined.py               # Streamlit app (Manual + Auto mode)
-│   └── utils.py                      # Utility functions cho UI
-│
-├── backend_api/                      # Backend API cho Chrome Extension
-│   ├── __init__.py
-│   ├── main.py                       # FastAPI application
-│   ├── api_models.py                 # Pydantic models cho API
-│   └── requirements_api.txt          # Dependencies cho API server
-│
-├── chrome_extension/                 # Chrome Extension
-│   ├── manifest.json                 # Extension configuration
-│   ├── README.md                     # Hướng dẫn sử dụng Extension
-│   ├── icons/                        # Extension icons
-│   ├── popup/                        # Popup UI (HTML/CSS/JS)
+├── chrome_extension/                 # Chrome Extension (UI chính)
+│   ├── manifest.json                 # Extension config
 │   ├── content/                      # Content scripts
-│   ├── background/                   # Background service worker
-│   └── shared/                       # Shared utilities
+│   │   ├── floating-button.js        # Floating button UI
+│   │   ├── side-panel.js            # Side panel logic
+│   │   ├── side-panel.html          # Panel HTML
+│   │   └── highlight.css            # Entity highlight styles
+│   ├── background/                   # Service worker
+│   └── shared/                       # Constants & utils
 │
-├── vncorenlp_models/                 # VnCoreNLP models
-│   └── models/
-│       └── wordsegmenter/            # Word segmentation models
+├── app/                              # Streamlit web app (demo)
+│   ├── app_combined.py               # Main app
+│   └── utils.py                      # UI utilities
 │
-└── .streamlit/                       # Cấu hình Streamlit
-    └── secrets.toml                  # API keys (không commit)
-```
-
-### Giải thích các file quan trọng
-
-#### **src/config.py**
-File cấu hình tập trung chứa:
-- Đường dẫn files và thư mục
-- Hyperparameters training
-- Danh sách entities và tag mapping
-- Cấu hình VnCoreNLP
-
-#### **src/dataset.py**
-Định nghĩa `NERDataset` (PyTorch Dataset):
-- Load và tokenize dữ liệu
-- Xử lý label alignment cho sub-word tokens
-- Padding và truncation
-
-#### **src/train.py**
-Script training chính:
-- Load dataset và mô hình PhoBERT
-- Training loop với validation
-- Lưu checkpoint tốt nhất
-
-#### **src/evaluate.py**
-Đánh giá mô hình:
-- Tính toán metrics (seqeval)
-- Per-entity performance
-- Confusion matrix
-
-#### **src/inference.py**
-Class `NERPredictor` cho inference:
-- Load mô hình đã train
-- Tích hợp VnCoreNLP
-- Xử lý sub-word tokens
-- Trả về predictions
-
-#### **src/patient_extraction/**
-Module trích xuất thông tin bệnh nhân có cấu trúc:
-- `entity_structures.py`: Định nghĩa `PatientRecord` dataclass
-- `manual_extractor.py`: Logic trích xuất từ entities
-- `gemini_splitter.py`: Tách văn bản nhiều bệnh nhân bằng Gemini AI
-
-#### **app/app_combined.py**
-Streamlit web application:
-- Giao diện 2 tab (Manual/Auto Mode)
-- Visualize entities với màu sắc
-- Hiển thị thông tin bệnh nhân
-- Xuất kết quả JSON/CSV
-
----
-
-## Dataset
-
-### PhoNER_COVID19
-
-Dataset được sử dụng: **PhoNER_COVID19** - Một corpus tiếng Việt được gán nhãn thủ công cho bài toán NER trong domain COVID-19.
-
-**Thống kê:**
-- **Training set**: ~5,000 câu
-- **Development set**: ~500 câu
-- **Test set**: ~500 câu
-
-**Nguồn:** [VinAI Research](https://github.com/VinAIResearch/PhoNER_COVID19)
-
-**Format:** JSON với cấu trúc:
-```json
-{
-  "id": "001",
-  "words": ["Bệnh", "nhân", "123", "là", "Nguyễn", "Văn", "A"],
-  "tags": ["O", "O", "B-PATIENT_ID", "O", "B-NAME", "I-NAME", "I-NAME"]
-}
+├── data/                             # Dataset
+│   └── raw/PhoNER_COVID19/          # Train/dev/test JSON
+│
+├── models/                           # Trained models
+│   └── phobert-ner-covid/           # Model weights + tokenizer
+│
+├── logs/                             # API logs
+│   └── ner_api.log                  # Full pipeline logs
+│
+├── tests/                            # Unit tests
+│   └── test_merge_texts_smart.py    # Smart merge tests
+│
+├── docs/                             # Documentation
+│   └── SMART_MERGE_IMPLEMENTATION.md # Technical docs
+│
+├── requirements.txt                  # Python dependencies
+├── run_extension_server.py          # Launch FastAPI server
+├── run_app.py                       # Launch Streamlit app
+└── setup_vncorenlp.py               # VnCoreNLP setup script
 ```
 
 ---
 
-## Mô hình
+## 📊 Dataset & Model
 
-### Architecture
+### Dataset: PhoNER_COVID19
 
+- **Source**: [VinAI Research](https://github.com/VinAIResearch/PhoNER_COVID19)
+- **Format**: JSON (word-level tokenization)
+- **Size**: 
+  - Train: ~5,000 sentences
+  - Dev: ~700 sentences
+  - Test: ~700 sentences
+- **Entities**: 10 types (xem [section trên](#entities-được-nhận-diện))
+
+### Model: PhoBERT-base
+
+- **Base model**: `vinai/phobert-base`
+- **Architecture**: RoBERTa-based, pre-trained on 20GB Vietnamese text
+- **Fine-tuning**: Token classification head (11 classes: 10×2 BIO tags + O)
+- **Performance** (trên test set):
+  - Precision: ~87%
+  - Recall: ~85%
+  - F1-score: ~86%
+
+### Training
+
+```bash
+python src/train.py
 ```
-Input Text (Vietnamese)
-    ↓
-VnCoreNLP Word Segmentation
-    ↓
-PhoBERT Tokenizer (BPE)
-    ↓
-PhoBERT Base Model (vinai/phobert-base)
-    ↓
-Linear Classification Head
-    ↓
-Predictions (BIO Tags)
+
+**Hyperparameters** (trong `src/config.py`):
+```python
+BATCH_SIZE = 16
+MAX_LEN = 256
+LEARNING_RATE = 2e-5
+EPOCHS = 10
+WARMUP_STEPS = 500
 ```
 
-### PhoBERT
-
-- **Base Model**: `vinai/phobert-base`
-- **Architecture**: RoBERTa-based, pre-trained cho tiếng Việt
-- **Vocab Size**: 64,000 BPE tokens
-- **Hidden Size**: 768
-- **Layers**: 12 transformer layers
-- **Parameters**: ~135M
-
-### Fine-tuning Strategy
-
-1. **Freeze**: Không freeze bất kỳ layer nào (full fine-tuning)
-2. **Learning Rate**: 3e-5 với linear warmup
-3. **Batch Size**: 8 (train) / 4 (validation)
-4. **Max Length**: 256 tokens
-5. **Epochs**: 5 epochs
-6. **Optimizer**: AdamW
-7. **Label Smoothing**: Sử dụng -100 cho sub-word tokens
-
-### Performance
-
-Metrics trên test set (sau 5 epochs):
-
-| Metric | Score |
-|--------|-------|
-| Overall Precision | ~88-92% |
-| Overall Recall | ~86-90% |
-| Overall F1 | ~87-91% |
-
-**Lưu ý:** Kết quả cụ thể phụ thuộc vào hyperparameters và random seed.
+**GPU Memory**: ~6GB VRAM
 
 ---
 
-## Công nghệ sử dụng
+## 🔧 Technical Details
 
-- **PyTorch** - Deep learning framework
-- **Transformers** (Hugging Face) - Pre-trained models
-- **VnCoreNLP** - Vietnamese NLP toolkit
-- **seqeval** - Sequence labeling evaluation
-- **Streamlit** - Web application framework
-- **Google Generative AI** - Gemini API integration
-- **pandas** - Data manipulation
+### 1. Smart Merge Algorithm
+
+**Vấn đề**: Duplicate entities (ví dụ: "BN123 BN123", "Nguyễn Văn A Nguyễn Văn A")
+
+**Giải pháp**: Position-based deduplication
+1. Sort entities by position
+2. Group by proximity (gap < 5 chars = same mention)
+3. Merge within group
+4. Deduplicate mentions with `dict.fromkeys()`
+5. Return first mention
+
+**Code**: `src/patient_extraction/manual_extractor.py` → `_merge_texts_smart()`
+
+**Tests**: `tests/test_merge_texts_smart.py` (12 test cases, all passed)
 
 ---
 
-## Hướng dẫn phát triển
+### 2. Date Classification
 
-### Thay đổi hyperparameters
+Hệ thống phân loại dates thành **9 loại**:
 
-Chỉnh sửa trong `src/config.py`:
+| Loại | Keywords | Ví dụ |
+|------|----------|-------|
+| admission | nhập viện, vào viện | ngày 15/3 nhập viện |
+| discharge | xuất viện, ra viện | xuất viện ngày 20/3 |
+| test | xét nghiệm, test | ngày 16/3 xét nghiệm |
+| positive | dương tính, (+) | kết quả dương tính 17/3 |
+| negative | âm tính, (-) | âm tính vào 25/3 |
+| entry | nhập cảnh, vào VN | nhập cảnh ngày 10/3 |
+| recovery | khỏi bệnh, hồi phục | khỏi bệnh 30/3 |
+| death | tử vong, qua đời | tử vong ngày 1/4 |
+| unknown | (không match) | ngày 15/3 |
+
+**Code**: `src/patient_extraction/manual_extractor.py` → `_classify_date()`
+
+---
+
+### 3. Logging System
+
+**File log**: `logs/ner_api.log`
+
+**Ghi log:**
+- Input text (preview 200 chars)
+- NER results (max 20 entities)
+- Gemini segments (full text)
+- Patient records (all 16 fields)
+- Processing time
+- Errors with stack trace
+
+**Code**: `backend_api/logger.py`
+
+---
+
+### 4. CSV Export với UTF-8 BOM
+
+**Vấn đề**: Excel không hiển thị đúng tiếng Việt
+
+**Giải pháp**: Thêm BOM (Byte Order Mark) `\uFEFF`
+
+```javascript
+const BOM = '\uFEFF';
+const csv = BOM + header + '\n' + rows;
+```
+
+**Kết quả**: Excel mở đúng tiếng Việt có dấu
+
+---
+
+### 5. VnCoreNLP Integration
+
+**Singleton pattern** để tránh load nhiều lần:
 
 ```python
-MAX_LEN = 256              # Tăng nếu văn bản dài hơn
-TRAIN_BATCH_SIZE = 8       # Giảm nếu GPU out of memory
-LEARNING_RATE = 3e-5       # Điều chỉnh để tối ưu training
-EPOCHS = 5                 # Tăng để train lâu hơn
+class VietnameseTextProcessor:
+    _instance = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
 ```
 
-### Thêm entity mới
+**Word segmentation**: Chuyển "công_việc giáo_viên" → ["công_việc", "giáo_viên"]
 
-1. Cập nhật `UNIQUE_TAGS` trong `src/config.py`
-2. Chuẩn bị dữ liệu với nhãn mới
-3. Re-train mô hình
+---
 
-### Tích hợp vào hệ thống khác
+## 🧪 Testing
 
-Sử dụng `NERPredictor` class:
+### Run unit tests
 
-```python
-from src.inference import NERPredictor
+```bash
+# Test smart merge algorithm
+python -m pytest tests/test_merge_texts_smart.py -v
 
-predictor = NERPredictor(
-    model_path="models/phobert-ner-covid",
-    use_word_segmentation=True
-)
+# Kết quả: 12/12 tests passed
+```
 
-# API-style usage
-def extract_entities(text: str):
-    predictions = predictor.predict(text)
-    # Process predictions
-    return predictions
+### Manual testing
+
+```bash
+# Start server
+python run_extension_server.py
+
+# Test API
+curl -X POST http://localhost:8000/api/ner/extract-manual \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Bệnh nhân BN123, nam, 35 tuổi."}'
 ```
 
 ---
 
-## Troubleshooting
+## 📝 Troubleshooting
 
-### Lỗi khi chạy VnCoreNLP
+### 1. Import Error: No module named 'src'
 
-**Vấn đề:** `FileNotFoundError: vncorenlp_models not found`
+**Giải pháp**: Thêm project root vào PYTHONPATH
+```bash
+# Windows
+set PYTHONPATH=%PYTHONPATH%;D:\path\to\vietnamese_covid_ner
 
-**Giải pháp:**
+# Linux/Mac
+export PYTHONPATH="${PYTHONPATH}:/path/to/vietnamese_covid_ner"
+```
+
+### 2. VnCoreNLP không hoạt động
+
+**Giải pháp**: 
 ```bash
 python setup_vncorenlp.py
 ```
 
-### GPU Out of Memory
+### 3. Model không load được
 
-**Giải pháp:**
-- Giảm `TRAIN_BATCH_SIZE` trong `src/config.py`
-- Giảm `MAX_LEN`
-- Sử dụng gradient accumulation
+**Kiểm tra**: 
+- Thư mục `models/phobert-ner-covid/` có đầy đủ files: `model.safetensors`, `config.json`, `vocab.txt`
+- Nếu thiếu model, download từ: https://drive.google.com/drive/folders/1GNf_xUUrswxe3feUWCaTyyLbzFnLfLHS?usp=drive_link
+- Hoặc train lại: `python src/train.py`
 
-### Streamlit không chạy
+### 4. Gemini API lỗi
 
-**Vấn đề:** `ModuleNotFoundError: No module named 'streamlit'`
+**Kiểm tra**:
+- API key đúng format
+- Đã set environment variable
+- Quota chưa vượt giới hạn
 
-**Giải pháp:**
-```bash
-pip install streamlit
-# hoặc
-pip install -r requirements.txt
-```
+### 5. Chrome Extension không kết nối server
 
-### Gemini API không hoạt động
-
-**Kiểm tra:**
-1. API key có đúng không?
-2. File `.streamlit/secrets.toml` có tồn tại không?
-3. Có kết nối internet không?
+**Kiểm tra**:
+- Server đang chạy: http://localhost:8000/api/health
+- CORS enabled trong FastAPI
+- Port 8000 không bị chặn bởi firewall
 
 ---
 
-## Đóng góp
+## 📚 Documentation
 
-Mọi đóng góp đều được chào đón! Vui lòng:
+- **Chrome Extension**: [chrome_extension/README.md](chrome_extension/README.md)
+- **Quick Start**: [chrome_extension/QUICKSTART.md](chrome_extension/QUICKSTART.md)
+- **Smart Merge**: [docs/SMART_MERGE_IMPLEMENTATION.md](docs/SMART_MERGE_IMPLEMENTATION.md)
+- **Logging**: [logs/README.md](logs/README.md)
+- **Streamlit Config**: [.streamlit/README.md](.streamlit/README.md)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please:
 
 1. Fork repository
-2. Tạo branch mới (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add some AmazingFeature'`)
+2. Create feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
 4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Tạo Pull Request
+5. Open Pull Request
 
 ---
 
-## License
+## 📄 License
 
-Dự án này được phát hành dưới giấy phép MIT. Xem file `LICENSE` để biết thêm chi tiết.
-
----
-
-## Liên hệ
-
-- **Repository**: [https://github.com/doananhhung/NER_Covid19](https://github.com/doananhhung/NER_Covid19)
-- **Issues**: [https://github.com/doananhhung/NER_Covid19/issues](https://github.com/doananhhung/NER_Covid19/issues)
+Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
 
-## Tài liệu tham khảo
+## 👥 Authors
 
-1. **PhoBERT**: [https://github.com/VinAIResearch/PhoBERT](https://github.com/VinAIResearch/PhoBERT)
-2. **PhoNER_COVID19**: [https://github.com/VinAIResearch/PhoNER_COVID19](https://github.com/VinAIResearch/PhoNER_COVID19)
-3. **VnCoreNLP**: [https://github.com/vncorenlp/VnCoreNLP](https://github.com/vncorenlp/VnCoreNLP)
-4. **Transformers**: [https://huggingface.co/docs/transformers](https://huggingface.co/docs/transformers)
+- **Đoàn Anh Hùng** - [GitHub](https://github.com/doananhhung)
 
 ---
 
-## Changelog
+## 🙏 Acknowledgments
 
-### Version 1.0.0 (November 2025)
-- Hoàn thiện hệ thống NER với PhoBERT
-- Tích hợp VnCoreNLP cho word segmentation
-- Xây dựng Web App với Manual và Auto Mode
-- Tích hợp Gemini AI cho trích xuất tự động
-- Module trích xuất thông tin bệnh nhân có cấu trúc
-- Hỗ trợ xuất dữ liệu JSON/CSV
+- [VinAI Research](https://github.com/VinAIResearch) - PhoNER_COVID19 dataset & PhoBERT model
+- [VnCoreNLP](https://github.com/vncorenlp/VnCoreNLP) - Vietnamese NLP toolkit
+- [Google Gemini](https://ai.google.dev/) - AI-powered text splitting
 
 ---
 
-**Cảm ơn bạn đã sử dụng Vietnamese COVID-19 NER!** 🚀
+## 📞 Contact & Support
+
+- **GitHub Issues**: [https://github.com/doananhhung/NER_Covid19/issues](https://github.com/doananhhung/NER_Covid19/issues)
+- **Email**: doananhhung@example.com
+
+---
+
+**⭐ Nếu project hữu ích, hãy cho một star trên GitHub!**
