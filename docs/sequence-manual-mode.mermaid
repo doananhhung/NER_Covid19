@@ -1,0 +1,72 @@
+%% Sequence Diagram: Manual Mode Flow
+%% User analyzes text from webpage
+
+sequenceDiagram
+    actor User
+    participant FloatingBtn as 🔘 Floating Button
+    participant SidePanel as 📊 Side Panel
+    participant Content as 📝 Content Script
+    participant DOM as 📄 Webpage DOM
+    participant API as 🔌 FastAPI Backend
+    participant VnCore as 🔤 VnCoreNLP
+    participant Model as 🤖 PhoBERT NER
+    participant Extractor as 📋 Patient Extractor
+    
+    %% Step 1: Open Extension
+    User->>FloatingBtn: Click floating button
+    FloatingBtn->>SidePanel: Open side panel
+    SidePanel-->>User: Show UI (450px panel)
+    
+    %% Step 2: Get Text from Webpage
+    User->>SidePanel: Click "Lấy từ trang web"
+    SidePanel->>Content: sendMessage(GET_PAGE_TEXT)
+    Content->>DOM: extractPageText()
+    DOM-->>Content: HTML elements
+    Content->>Content: Filter noise<br/>(remove ads, nav, footer)
+    Content->>Content: Extract & clean text
+    Content-->>SidePanel: sendResponse({text, length, source})
+    SidePanel-->>User: Display text in textarea
+    
+    %% Step 3: Analyze (Manual Mode)
+    User->>SidePanel: Select "Manual Mode"<br/>Click "Phân tích"
+    SidePanel->>SidePanel: Validate input
+    SidePanel->>API: POST /api/ner/extract-manual<br/>{text: "..."}
+    
+    %% Step 4: Server Processing
+    API->>VnCore: Word segmentation
+    Note over VnCore: "Bệnh nhân" → "Bệnh_nhân"<br/>(Singleton instance)
+    VnCore-->>API: Segmented text
+    
+    API->>Model: predict(segmented_text)
+    Model->>Model: Tokenize (PhoBERT BPE)
+    Model->>Model: Forward pass
+    Model->>Model: Word alignment<br/>(handle subwords)
+    Model-->>API: Entities list<br/>[{text, tag, start, end}]
+    
+    API->>Extractor: extract_single_patient(entities)
+    Extractor->>Extractor: Group by entity type
+    Extractor->>Extractor: Smart merge<br/>(deduplicate)
+    Extractor->>Extractor: Classify dates<br/>(9 types)
+    Extractor-->>API: PatientRecord object
+    
+    API->>API: Log request & response
+    API-->>SidePanel: JSON Response<br/>{entities, patient}
+    
+    %% Step 5: Display Results
+    SidePanel->>SidePanel: Parse response
+    SidePanel->>SidePanel: Render tables<br/>(Entities + Patient info)
+    SidePanel-->>User: Show results in 2 tabs
+    
+    %% Step 6: Highlight on Page
+    User->>SidePanel: Click "Highlight"
+    SidePanel->>Content: sendMessage(HIGHLIGHT_ENTITIES)
+    Content->>DOM: Find text nodes
+    Content->>DOM: Wrap with <mark> tags
+    DOM-->>User: Show colored highlights
+    
+    %% Step 7: Export CSV
+    User->>SidePanel: Click "Download CSV"
+    SidePanel->>SidePanel: Generate CSV<br/>(UTF-8 BOM)
+    SidePanel->>User: Download file<br/>covid_patients_xxx.csv
+    
+    Note over User,Extractor: Total time: ~2-3 seconds

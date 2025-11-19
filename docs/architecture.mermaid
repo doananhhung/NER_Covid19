@@ -1,0 +1,107 @@
+%% Kiến trúc Client-Server: Chrome Extension + FastAPI Backend
+%% Vietnamese COVID-19 NER System Architecture
+
+graph TB
+    subgraph Browser["🌐 Chrome Browser"]
+        subgraph Website["Any Website"]
+            DOM["📄 HTML DOM<br/>(Webpage Content)"]
+        end
+        
+        subgraph Extension["🦠 Chrome Extension"]
+            FloatingBtn["🔘 Floating Button<br/>(floating-button.js)"]
+            SidePanel["📊 Side Panel<br/>(side-panel.js)<br/>- Text Input<br/>- Mode Selection<br/>- Results Display"]
+            ContentScript["📝 Content Script<br/>(content.js)<br/>- Extract Text<br/>- Highlight Entities"]
+            Background["⚙️ Background Service<br/>(background.js)<br/>- Message Routing"]
+        end
+    end
+    
+    subgraph Server["🖥️ FastAPI Backend Server<br/>(localhost:8000)"]
+        API["🔌 REST API Endpoints<br/>(main.py)"]
+        
+        subgraph Endpoints["API Routes"]
+            ManualEP["/api/ner/extract-manual<br/>(1 bệnh nhân)"]
+            AutoEP["/api/ner/extract-auto<br/>(nhiều bệnh nhân)"]
+            HealthEP["/api/health<br/>(health check)"]
+        end
+        
+        subgraph Processing["Processing Pipeline"]
+            VnCore["🔤 VnCoreNLP<br/>(Word Segmentation)<br/>Singleton Instance"]
+            NERModel["🤖 PhoBERT NER Model<br/>(inference.py)<br/>- Tokenization<br/>- Prediction<br/>- Label Alignment"]
+            GeminiSplit["✨ Gemini AI<br/>(gemini_splitter.py)<br/>Text Splitting"]
+            Extractor["📋 Patient Extractor<br/>(manual_extractor.py)<br/>- Smart Merge<br/>- Date Classification<br/>- Deduplication"]
+        end
+        
+        Logger["📝 Logging System<br/>(logger.py)<br/>logs/ner_api.log"]
+    end
+    
+    subgraph External["🌍 External Services"]
+        GeminiAPI["☁️ Google Gemini API<br/>(AI Text Splitter)"]
+    end
+    
+    subgraph MLModel["🧠 ML Model Assets"]
+        ModelFiles["💾 Model Files<br/>models/phobert-ner-covid/<br/>- model.safetensors<br/>- config.json<br/>- vocab.txt<br/>- tokenizer files"]
+        VnCoreFiles["📦 VnCoreNLP Models<br/>vncorenlp_models/<br/>- wordsegmenter.rdr<br/>- vi-vocab"]
+    end
+    
+    %% User Interactions
+    User["👤 User"] -->|"1. Click"| FloatingBtn
+    FloatingBtn -->|"2. Open"| SidePanel
+    
+    %% Text Extraction Flow
+    User -->|"3a. Click 'Lấy từ trang web'"| SidePanel
+    SidePanel -->|"4. sendMessage<br/>(GET_PAGE_TEXT)"| ContentScript
+    ContentScript -->|"5. extractPageText()"| DOM
+    DOM -->|"6. Return text"| ContentScript
+    ContentScript -->|"7. sendResponse"| SidePanel
+    
+    %% Manual Input Flow
+    User -->|"3b. Paste text manually"| SidePanel
+    
+    %% Analysis Flow - Manual Mode
+    User -->|"8. Click 'Phân tích'<br/>(Manual Mode)"| SidePanel
+    SidePanel -->|"9. HTTP POST<br/>fetch()"| ManualEP
+    ManualEP -->|"10. Process"| VnCore
+    VnCore -->|"11. Segmented text"| NERModel
+    NERModel -->|"12. Load model"| ModelFiles
+    NERModel -->|"13. Entities"| Extractor
+    Extractor -->|"14. Patient Record"| ManualEP
+    ManualEP -->|"15. JSON Response"| SidePanel
+    
+    %% Analysis Flow - Auto Mode
+    User -->|"8. Click 'Phân tích'<br/>(Auto Mode)"| SidePanel
+    SidePanel -->|"9. HTTP POST<br/>fetch()"| AutoEP
+    AutoEP -->|"10. Split text"| GeminiSplit
+    GeminiSplit -->|"11. API Call"| GeminiAPI
+    GeminiAPI -->|"12. Text segments"| GeminiSplit
+    GeminiSplit -->|"13. Segments"| AutoEP
+    AutoEP -->|"14. For each segment"| VnCore
+    VnCore -->|"15. Process"| NERModel
+    NERModel -->|"16. Entities"| Extractor
+    Extractor -->|"17. Multiple Patients"| AutoEP
+    AutoEP -->|"18. JSON Response"| SidePanel
+    
+    %% Results Display & Actions
+    SidePanel -->|"19. Display results"| User
+    User -->|"20. Click 'Highlight'"| SidePanel
+    SidePanel -->|"21. sendMessage<br/>(HIGHLIGHT_ENTITIES)"| ContentScript
+    ContentScript -->|"22. Highlight on page"| DOM
+    
+    User -->|"23. Click 'Download CSV'"| SidePanel
+    SidePanel -->|"24. Generate & Download<br/>UTF-8 BOM CSV"| User
+    
+    %% Logging
+    API -.->|"Log all requests"| Logger
+    VnCore -.->|"Load once"| VnCoreFiles
+    
+    %% Styling
+    classDef userClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef extensionClass fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef serverClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef mlClass fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    classDef externalClass fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class User userClass
+    class FloatingBtn,SidePanel,ContentScript,Background extensionClass
+    class API,ManualEP,AutoEP,HealthEP,VnCore,NERModel,Extractor,GeminiSplit,Logger serverClass
+    class ModelFiles,VnCoreFiles mlClass
+    class GeminiAPI externalClass

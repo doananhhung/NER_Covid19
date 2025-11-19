@@ -1,0 +1,107 @@
+%% Deployment Architecture
+%% System components and their relationships
+
+graph TB
+    subgraph Development["💻 DEVELOPMENT ENVIRONMENT"]
+        Dev["Developer"]
+        Git["Git Repository<br/>github.com/doananhhung/NER_Covid19"]
+    end
+    
+    subgraph LocalServer["🖥️ LOCAL SERVER (localhost:8000)"]
+        FastAPI["FastAPI Application<br/>uvicorn main:app"]
+        
+        subgraph Backend["Backend Components"]
+            API1["/api/ner/extract-manual"]
+            API2["/api/ner/extract-auto"]
+            API3["/api/health"]
+        end
+        
+        subgraph CoreServices["Core Services"]
+            VnCoreNLP["VnCoreNLP Service<br/>(Singleton)"]
+            NERPredictor["NER Predictor<br/>(Model Loading)"]
+            PatientExtraction["Patient Extraction Logic"]
+        end
+        
+        subgraph Data["Data & Models"]
+            Models["Model Files<br/>models/phobert-ner-covid/<br/>~1.5GB"]
+            VnModels["VnCoreNLP Models<br/>vncorenlp_models/<br/>~100MB"]
+            Logs["Log Files<br/>logs/ner_api.log"]
+        end
+    end
+    
+    subgraph ClientSide["🌐 CLIENT SIDE"]
+        Browser["Chrome Browser"]
+        Extension["Chrome Extension<br/>(Load Unpacked)"]
+        
+        subgraph ExtFiles["Extension Files"]
+            Manifest["manifest.json<br/>(v3)"]
+            Content["content.js"]
+            SidePanel["side-panel.html/js"]
+            FloatingBtn["floating-button.js"]
+        end
+    end
+    
+    subgraph ExternalAPIs["☁️ EXTERNAL SERVICES"]
+        Gemini["Google Gemini API<br/>ai.google.dev<br/>(Optional - Auto Mode)"]
+        HuggingFace["HuggingFace<br/>(Model download)<br/>vinai/phobert-base"]
+    end
+    
+    subgraph Users["👥 END USERS"]
+        Doctor["👨‍⚕️ Medical Staff"]
+        Analyst["📊 Data Analyst"]
+        Researcher["🔬 Researcher"]
+    end
+    
+    %% Development Flow
+    Dev -->|"Code & Push"| Git
+    Git -->|"Clone/Pull"| FastAPI
+    Git -->|"Install Extension"| Extension
+    
+    %% Model Setup
+    HuggingFace -.->|"Download (one-time)"| Models
+    
+    %% Server Startup
+    FastAPI --> Backend
+    Backend --> CoreServices
+    CoreServices --> Data
+    VnCoreNLP -->|"Load"| VnModels
+    NERPredictor -->|"Load"| Models
+    
+    %% Client-Server Communication
+    Extension <-->|"HTTP REST API<br/>localhost:8000"| FastAPI
+    Extension -->|"Optional"| Gemini
+    
+    %% Extension Loading
+    Browser -->|"Load Unpacked"| Extension
+    Extension --> ExtFiles
+    
+    %% User Interaction
+    Users -->|"Use"| Browser
+    Browser -->|"Access"| Extension
+    
+    %% Logging
+    Backend -.->|"Write"| Logs
+    
+    %% Notes
+    Note1["📦 Installation:<br/>1. pip install -r requirements.txt<br/>2. python setup_vncorenlp.py<br/>3. Download model from Drive"]
+    Note2["🚀 Startup:<br/>python run_extension_server.py<br/>(Start FastAPI server)"]
+    Note3["🔧 Extension Install:<br/>1. chrome://extensions/<br/>2. Enable Developer Mode<br/>3. Load Unpacked → chrome_extension/"]
+    Note4["⚡ Performance:<br/>- First load: ~8s (VnCoreNLP)<br/>- Inference: ~0.5s/text<br/>- GPU: Optional"]
+    
+    FastAPI -.-> Note1
+    FastAPI -.-> Note2
+    Extension -.-> Note3
+    CoreServices -.-> Note4
+    
+    %% Styling
+    classDef devClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    classDef serverClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef clientClass fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef externalClass fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    classDef userClass fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
+    
+    class Dev,Git devClass
+    class FastAPI,Backend,CoreServices,Data,API1,API2,API3,VnCoreNLP,NERPredictor,PatientExtraction,Models,VnModels,Logs serverClass
+    class Browser,Extension,ExtFiles,Manifest,Content,SidePanel,FloatingBtn clientClass
+    class Gemini,HuggingFace externalClass
+    class Users,Doctor,Analyst,Researcher userClass

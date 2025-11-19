@@ -1,0 +1,61 @@
+%% Sequence Diagram: Auto Mode Flow (Multi-patient)
+%% Using Gemini AI to split text
+
+sequenceDiagram
+    actor User
+    participant SidePanel as 📊 Side Panel
+    participant API as 🔌 FastAPI Backend
+    participant Gemini as ✨ Gemini AI
+    participant VnCore as 🔤 VnCoreNLP
+    participant Model as 🤖 PhoBERT NER
+    participant Extractor as 📋 Patient Extractor
+    
+    %% Step 1: User inputs multi-patient text
+    User->>SidePanel: Paste text with<br/>multiple patients
+    User->>SidePanel: Select "Auto Mode"<br/>Click "Phân tích"
+    
+    %% Step 2: Send to backend
+    SidePanel->>API: POST /api/ner/extract-auto<br/>{text: "BN123...BN124..."}
+    
+    %% Step 3: Gemini splits text
+    API->>Gemini: split_text_with_gemini(text)
+    Note over Gemini: Prompt:<br/>"Tách văn bản thành segments,<br/>mỗi segment = 1 bệnh nhân"
+    Gemini->>Gemini: AI analysis<br/>(context understanding)
+    Gemini-->>API: segments: [<br/>  "BN123, nam, 35 tuổi...",<br/>  "BN124, nữ, 28 tuổi..."<br/>]
+    
+    %% Step 4: Process each segment
+    loop For each segment
+        API->>VnCore: Word segmentation
+        VnCore-->>API: Segmented text
+        
+        API->>Model: predict(segment)
+        Model-->>API: Entities for segment
+        
+        API->>Extractor: extract_single_patient(entities)
+        Extractor->>Extractor: Smart merge
+        Extractor->>Extractor: Classify dates
+        Extractor-->>API: PatientRecord
+    end
+    
+    %% Step 5: Deduplication
+    API->>API: Deduplicate patients<br/>(by patient_id)
+    API->>API: Log all patients
+    
+    %% Step 6: Return results
+    API-->>SidePanel: JSON Response<br/>{patients: [patient1, patient2, ...]}
+    
+    %% Step 7: Display
+    SidePanel->>SidePanel: Render patient table
+    SidePanel-->>User: Show all patients<br/>with delete buttons
+    
+    %% Step 8: User actions
+    alt User deletes wrong patient
+        User->>SidePanel: Click 🗑️ Delete
+        SidePanel->>SidePanel: Remove from array
+        SidePanel-->>User: Update table
+    end
+    
+    User->>SidePanel: Click "Download CSV"
+    SidePanel->>User: Export all remaining patients
+    
+    Note over User,Extractor: Total time: ~5-8 seconds<br/>(depends on Gemini API latency)

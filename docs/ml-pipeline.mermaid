@@ -1,0 +1,63 @@
+%% ML Pipeline: NER Processing Flow
+%% From raw text to structured patient data
+
+graph TD
+    Start["📄 Raw Text Input<br/>'Bệnh nhân BN123, nam, 35 tuổi...'"]
+    
+    subgraph Preprocessing["1️⃣ PREPROCESSING"]
+        VnCore["VnCoreNLP Word Segmentation"]
+        Segment["Segmented Text<br/>'Bệnh_nhân BN123 , nam , 35 tuổi'"]
+    end
+    
+    subgraph NER["2️⃣ NER MODEL (PhoBERT)"]
+        Tokenize["PhoBERT Tokenizer<br/>(BPE encoding)"]
+        Tokens["Tokens + word_ids<br/>['&lt;s&gt;','Bệnh','_nhân','BN','123',',','nam',...]"]
+        Model["PhoBERT Base (frozen)<br/>+ Classification Head"]
+        Predict["Token-level Predictions<br/>[O, B-PATIENT, I-PATIENT, B-PATIENT_ID, ...]"]
+        Align["Word Alignment<br/>(merge subwords)"]
+        Entities["Entities List<br/>[{text:'BN123', tag:'PATIENT_ID', start:11, end:16}, ...]"]
+    end
+    
+    subgraph Extraction["3️⃣ PATIENT EXTRACTION"]
+        Group["Group by Entity Type<br/>patient_ids: ['BN123']<br/>genders: ['nam']<br/>ages: ['35']"]
+        Merge["Smart Merge Algorithm<br/>(deduplicate)"]
+        Dates["Date Classification<br/>(admission, test, positive, ...)"]
+        Patient["PatientRecord Object<br/>{<br/>  patient_id: 'BN123',<br/>  gender: 'nam',<br/>  age: '35',<br/>  ...<br/>}"]
+    end
+    
+    Output["📊 Structured Output<br/>JSON / CSV / UI Display"]
+    
+    %% Flow
+    Start --> VnCore
+    VnCore --> Segment
+    Segment --> Tokenize
+    Tokenize --> Tokens
+    Tokens --> Model
+    Model --> Predict
+    Predict --> Align
+    Align --> Entities
+    Entities --> Group
+    Group --> Merge
+    Merge --> Dates
+    Dates --> Patient
+    Patient --> Output
+    
+    %% Annotations
+    Note1["⚙️ Singleton<br/>Load once, reuse"]
+    Note2["🧠 F1-score: ~94-95%<br/>10 entity types<br/>BIO tagging"]
+    Note3["🔍 Key algorithms:<br/>- Position-based dedup<br/>- Context-aware dates<br/>- 9 date types"]
+    
+    VnCore -.-> Note1
+    Model -.-> Note2
+    Merge -.-> Note3
+    
+    %% Styling
+    classDef preprocessClass fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    classDef nerClass fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    classDef extractClass fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    classDef ioClass fill:#fff3e0,stroke:#e65100,stroke-width:3px
+    
+    class VnCore,Segment preprocessClass
+    class Tokenize,Tokens,Model,Predict,Align,Entities nerClass
+    class Group,Merge,Dates,Patient extractClass
+    class Start,Output ioClass

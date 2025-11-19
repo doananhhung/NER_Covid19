@@ -1,0 +1,38 @@
+%% Kiến trúc tổng quan đơn giản
+%% High-level Architecture Overview
+
+graph LR
+    subgraph Client["CLIENT SIDE"]
+        User["👤 User"]
+        UI["🦠 Chrome Extension<br/>- Floating Button<br/>- Side Panel<br/>- Content Script"]
+        Web["🌐 Website DOM<br/>(Any webpage)"]
+    end
+    
+    subgraph Server["SERVER SIDE (localhost:8000)"]
+        API["🔌 FastAPI Backend"]
+        Pipeline["⚙️ Processing Pipeline"]
+        Model["🤖 PhoBERT NER Model"]
+    end
+    
+    subgraph External["EXTERNAL"]
+        Gemini["☁️ Gemini AI"]
+    end
+    
+    %% Main Flow
+    User -->|"Interact"| UI
+    UI <-->|"Extract/Highlight"| Web
+    UI <-->|"HTTP API Calls<br/>(JSON)"| API
+    API --> Pipeline
+    Pipeline --> Model
+    Pipeline -.->|"Optional<br/>(Auto Mode)"| Gemini
+    API -->|"Response<br/>(Entities + Patients)"| UI
+    UI -->|"Display Results"| User
+    
+    %% Styling
+    classDef clientStyle fill:#e1f5ff,stroke:#01579b,stroke-width:3px
+    classDef serverStyle fill:#f3e5f5,stroke:#4a148c,stroke-width:3px
+    classDef externalStyle fill:#fce4ec,stroke:#880e4f,stroke-width:2px
+    
+    class User,UI,Web clientStyle
+    class API,Pipeline,Model serverStyle
+    class Gemini externalStyle
